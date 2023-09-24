@@ -14,8 +14,6 @@ La recepción que se intentó guardar fue por el total de los artículos y todos
 ## Bundles implicados:
     Manager 37714 
 ## Script modificados:
-* Name: LatamReady - Vendor Bill CLNT 2.0
-* Id: customscript_lmry_vendorbill_clnt_2_0
-* File: LMRY_VendorBillCLNT_V2.0.js
+
 ## Especificación de la modificación:
     El proceso de desactivacion del LATAM - TRANSACTION REFERENCE se estableció solo para el pais de colombia.

@@ -248,8 +248,8 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
                             newDebitLine.setDebitAmount(parseFloat(amount));
                             newCreditLine.setCreditAmount(parseFloat(amount));
 
-                            factNoEmitAccount = getAccount(Json_GMA, Json_IMA, factNoEmitAccount, department, class_, location, transactionRecord.getFieldValue('trandate'));
-                            defaultAccount = getAccount(Json_GMA, Json_IMA, defaultAccount, department, class_, location, transactionRecord.getFieldValue('trandate'));
+                            factNoEmitAccount = getAccount(Json_GMA, Json_IMA, factNoEmitAccount, department, class_, location);
+                            defaultAccount = getAccount(Json_GMA, Json_IMA, defaultAccount, department, class_, location);
                             
                             //nlapiLogExecution("DEBUG", "type - " + type, 'factNoEmitAccount : ' + factNoEmitAccount + ' , defaultAccount : ' + defaultAccount);
                             if (type == "vendorbill") {
@@ -343,8 +343,8 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
                                 newDebitLine1.setDebitAmount(parseFloat(amount));
                                 newCreditLine1.setCreditAmount(parseFloat(amount));
 
-                                cuentaVarExist = getAccount(Json_GMA, Json_IMA, cuentaVarExist, department, class_, location, transactionRecord.getFieldValue('trandate'));
-                                defaultAccount = getAccount(Json_GMA, Json_IMA, defaultAccount, department, class_, location, transactionRecord.getFieldValue('trandate'));
+                                cuentaVarExist = getAccount(Json_GMA, Json_IMA, cuentaVarExist, department, class_, location);
+                                defaultAccount = getAccount(Json_GMA, Json_IMA, defaultAccount, department, class_, location);
                                 
                                 // nlapiLogExecution("DEBUG", "type - " + type, 'cuentaVarExist : ' + cuentaVarExist + ' , defaultAccount : ' + defaultAccount);
                                 if (type == "itemreceipt") {
@@ -398,8 +398,8 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
                                 newDebitLine2.setDebitAmount(parseFloat(amount));
                                 newCreditLine2.setCreditAmount(parseFloat(amount));
 
-                                cuentaCompras = getAccount(Json_GMA, Json_IMA, cuentaCompras, department, class_, location, transactionRecord.getFieldValue('trandate'));
-                                factNoEmitAccount = getAccount(Json_GMA, Json_IMA, factNoEmitAccount, department, class_, location, transactionRecord.getFieldValue('trandate'));
+                                cuentaCompras = getAccount(Json_GMA, Json_IMA, cuentaCompras, department, class_, location);
+                                factNoEmitAccount = getAccount(Json_GMA, Json_IMA, factNoEmitAccount, department, class_, location);
 
                                 // nlapiLogExecution("DEBUG", "type - " + type, 'cuentaCompras : ' + cuentaCompras + ' , factNoEmitAccount : ' + factNoEmitAccount);
                                 if (type == "itemreceipt") {
@@ -567,10 +567,9 @@ function obtainsAccountsIMA(currentBook, accounts, lmrySubsidiaryId, fechaTransa
     return Json_IMA;
 }
 
-function getAccount(Json_GMA, Json_IMA, cuentaSource, dep, cla, loc, fechaTransaction) {
+function getAccount(Json_GMA, Json_IMA, cuentaSource, dep, cla, loc) {
     try {
         for (line in Json_GMA) {
-           
             if (line == cuentaSource) {
                 nlapiLogExecution("DEBUG", "Json_GMA[" + line + "]", JSON.stringify(Json_GMA[line]));
                 if (Json_GMA[line].department != 0 && Json_GMA[line].department != null && Json_GMA[line].department != "" && Json_GMA[line].department != undefined) {
@@ -597,7 +596,6 @@ function getAccount(Json_GMA, Json_IMA, cuentaSource, dep, cla, loc, fechaTransa
                     }
                 }
             }
-        
         }
         for (line in Json_IMA) {
             if (line == cuentaSource) {
