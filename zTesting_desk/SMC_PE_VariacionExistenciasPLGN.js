@@ -439,7 +439,7 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
             }
 
             // nlapiLogExecution("DEBUG", "accounts69Array", JSON.stringify(accounts69Array));
-            customizeGlImpactEspejo69(transactionRecord, standardLines, customLines, book, accounts69Array,Json_GMA,Json_IMA);
+            customizeGlImpactEspejo69(transactionRecord, standardLines, customLines, book, accounts69Array);
         }
     } catch (err) {
         nlapiLogExecution("ERROR", "[ customizeGlImpact ]", err);
