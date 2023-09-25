@@ -13,12 +13,14 @@ var featureOW = objContext.getFeature('SUBSIDIARIES');
 var featureDep = objContext.getSetting('FEATURE', 'DEPARTMENTS');
 var featureCla = objContext.getSetting('FEATURE', 'CLASSES');
 var featureLoc = objContext.getSetting('FEATURE', 'LOCATIONS');
+var FEAT_ACC_MAPPING = objContext.getFeature('coaclassificationmanagement');
 
-
-function customizeGlImpactEspejo69(transactionRecord, standardLines, customLines, book, accounts69Array) {
+function customizeGlImpactEspejo69(transactionRecord, standardLines, customLines, book, accounts69Array,globalAccountMappings,itemAccountMapping) {
 
     try {
-
+        
+        var hasAccountMapping = !book.isPrimary() && (FEAT_ACC_MAPPING == true || FEAT_ACC_MAPPING == "T");
+        nlapiLogExecution('DEBUG','hasAccountMapping',hasAccountMapping);
         if (featureOW) {
             var country = transactionRecord.getFieldText("custbody_lmry_subsidiary_country");
         } else {
@@ -55,13 +57,21 @@ function customizeGlImpactEspejo69(transactionRecord, standardLines, customLines
         }
 
         var allAccount = [];
-        for (var i = 0; i < accounts69Array.length; i++) {
-            if (allAccount.indexOf(accounts69Array[i].account) == -1) {
-                allAccount.push(accounts69Array[i].account);
+       
+        for (var Account = 0; Account < accounts69Array.length; Account++) {
+            if (allAccount.indexOf(accounts69Array[Account].account) == -1) {
+                var accountDestination = accounts69Array[Account].account;
+                
+                if (hasAccountMapping) {
+                    accountDestination = transformToPrimaryBookAccount(accountDestination, globalAccountMappings, itemAccountMapping);
+                }
+                allAccount.push(accountDestination);
             }
         }
         var jsonCuentas = {};
         var jsonAccounting = {};
+        nlapiLogExecution('DEBUG','allAccount',JSON.stringify(allAccount));
+    
 
         var filtrosCuentas = [];
         filtrosCuentas[0] = new nlobjSearchFilter('isinactive', null, 'is', 'F');
@@ -83,11 +93,11 @@ function customizeGlImpactEspejo69(transactionRecord, standardLines, customLines
         var resultCuentas = searchCuentas.runSearch().getResults(0, 1000);
 
         if (resultCuentas != null && resultCuentas.length > 0) {
-            for (var i = 0; i < resultCuentas.length; i++) {
-                var sourceAccount = resultCuentas[i].getValue('custrecord_lmry_pe_espejo_sourceacc');
+            for (var Account = 0; Account < resultCuentas.length; Account++) {
+                var sourceAccount = resultCuentas[Account].getValue('custrecord_lmry_pe_espejo_sourceacc');
                 jsonCuentas[sourceAccount] = {
-                    'debit': resultCuentas[i].getValue('custrecord_lmry_pe_espejo_debitacc'), 'credit': resultCuentas[i].getValue('custrecord_lmry_pe_espejo_creditacc'),
-                    'department': resultCuentas[i].getValue('custrecord_lmry_pe_espejo_department'), 'class': resultCuentas[i].getValue('custrecord_lmry_pe_espejo_class'), 'location': resultCuentas[i].getValue('custrecord_lmry_pe_espejo_location')
+                    'debit': resultCuentas[Account].getValue('custrecord_lmry_pe_espejo_debitacc'), 'credit': resultCuentas[Account].getValue('custrecord_lmry_pe_espejo_creditacc'),
+                    'department': resultCuentas[Account].getValue('custrecord_lmry_pe_espejo_department'), 'class': resultCuentas[Account].getValue('custrecord_lmry_pe_espejo_class'), 'location': resultCuentas[Account].getValue('custrecord_lmry_pe_espejo_location')
                 };
             }
 
@@ -98,16 +108,20 @@ function customizeGlImpactEspejo69(transactionRecord, standardLines, customLines
         //nlapiLogExecution('ERROR','jsonCuentas',JSON.stringify(jsonCuentas));
         if (featureMB == true || featureMB == 'T') {
             //BUSQUEDA POR INTERFAZ: MULTIBOOKING
-            for (var i = 0; i < accounts69Array.length; i++){
-               var cuenta = accounts69Array[i].account
-               var libro = accounts69Array[i].book
-               var columna = accounts69Array[i].columna
-               var amount = accounts69Array[i].amount
-               var departmentLinea = accounts69Array[i].department
-               var classLinea = accounts69Array[i].class
-               var locationLinea = accounts69Array[i].location
-               var memoLinea = accounts69Array[i].memo
-
+            for (var Account = 0; Account < accounts69Array.length; Account++){
+               var cuenta = accounts69Array[Account].account
+               var libro = accounts69Array[Account].book
+               var columna = accounts69Array[Account].columna
+               var amount = accounts69Array[Account].amount
+               var departmentLinea = accounts69Array[Account].department
+               var classLinea = accounts69Array[Account].class
+               var locationLinea = accounts69Array[Account].location
+               var memoLinea = accounts69Array[Account].memo
+               var accountDestination = accounts69Array[Account].account;
+                
+               if (hasAccountMapping) {
+                   cuenta = transformToPrimaryBookAccount(cuenta, globalAccountMappings, itemAccountMapping);
+               } 
                if (jsonCuentas[cuenta] != null && jsonCuentas[cuenta] != undefined) {
                    if (jsonAccounting[libro + ";" + cuenta] == null || jsonAccounting[libro + ";" + cuenta] == undefined) {
                        jsonAccounting[libro + ";" + cuenta] = [];
@@ -122,15 +136,17 @@ function customizeGlImpactEspejo69(transactionRecord, standardLines, customLines
                }
            }
         } else {
-           for (var i = 0; i < accounts69Array.length; i++){
-               var cuenta = accounts69Array[i].account
-               var columna = accounts69Array[i].columna
-               var amount = accounts69Array[i].amount
-               var departmentLinea = accounts69Array[i].department
-               var classLinea = accounts69Array[i].class
-               var locationLinea = accounts69Array[i].location
-               var memoLinea = accounts69Array[i].memo
-
+           for (var Account = 0; Account < accounts69Array.length; Account++){
+               var cuenta = accounts69Array[Account].account
+               var columna = accounts69Array[Account].columna
+               var amount = accounts69Array[Account].amount
+               var departmentLinea = accounts69Array[Account].department
+               var classLinea = accounts69Array[Account].class
+               var locationLinea = accounts69Array[Account].location
+               var memoLinea = accounts69Array[Account].memo
+               if (hasAccountMapping) {
+                cuenta = transformToPrimaryBookAccount(cuenta, globalAccountMappings, itemAccountMapping);
+               }
                if (jsonCuentas[cuenta] != null && jsonCuentas[cuenta] != undefined) {
                    if (jsonAccounting[1 + ";" + cuenta] == null || jsonAccounting[1 + ";" + cuenta] == undefined) {
                        jsonAccounting[1 + ";" + cuenta] = [];
@@ -160,61 +176,71 @@ function customizeGlImpactEspejo69(transactionRecord, standardLines, customLines
 
         //CREADO DE LINEAS GL
         nlapiLogExecution("DEBUG","jsonCuentas",JSON.stringify(jsonCuentas));
-        for (var i in jsonCuentas) {
-            if (jsonAccounting[currentBook + ";" + i] != null && jsonAccounting[currentBook + ";" + i] != undefined) {
+        for (var Account in jsonCuentas) {
+            
+            if (jsonAccounting[currentBook + ";" + Account] != null && jsonAccounting[currentBook + ";" + Account] != undefined) {
 
-                for (var j = 0; j < jsonAccounting[currentBook + ";" + i].length; j++) {
+                for (var j = 0; j < jsonAccounting[currentBook + ";" + Account].length; j++) {
 
-                    if ((mandatoryDepartment == true || mandatoryDepartment == 'T') && (jsonAccounting[currentBook + ";" + i][j]['department'] == '' || jsonAccounting[currentBook + ";" + i][j]['department'] == null) && (jsonCuentas[i]['department'] == '' || jsonCuentas[i]['department'] == null)) {
+                    if ((mandatoryDepartment == true || mandatoryDepartment == 'T') && (jsonAccounting[currentBook + ";" + Account][j]['department'] == '' || jsonAccounting[currentBook + ";" + Account][j]['department'] == null) && (jsonCuentas[Account]['department'] == '' || jsonCuentas[Account]['department'] == null)) {
                         continue;
                     }
 
-                    if ((mandatoryClass == true || mandatoryClass == 'T') && (jsonAccounting[currentBook + ";" + i][j]['class'] == '' || jsonAccounting[currentBook + ";" + i][j]['class'] == null) && (jsonCuentas[i]['class'] == '' || jsonCuentas[i]['class'] == null)) {
+                    if ((mandatoryClass == true || mandatoryClass == 'T') && (jsonAccounting[currentBook + ";" + Account][j]['class'] == '' || jsonAccounting[currentBook + ";" + Account][j]['class'] == null) && (jsonCuentas[Account]['class'] == '' || jsonCuentas[Account]['class'] == null)) {
                         continue;
                     }
 
-                    if ((mandatoryLocation == true || mandatoryLocation == 'T') && (jsonAccounting[currentBook + ";" + i][j]['location'] == '' || jsonAccounting[currentBook + ";" + i][j]['location'] == null) && (jsonCuentas[i]['location'] == '' || jsonCuentas[i]['location'] == null)) {
+                    if ((mandatoryLocation == true || mandatoryLocation == 'T') && (jsonAccounting[currentBook + ";" + Account][j]['location'] == '' || jsonAccounting[currentBook + ";" + Account][j]['location'] == null) && (jsonCuentas[Account]['location'] == '' || jsonCuentas[Account]['location'] == null)) {
                         continue;
                     }
 
-                    if (!jsonAccounting[currentBook + ";" + i][j]['amount']) {
+                    if (!jsonAccounting[currentBook + ";" + Account][j]['amount']) {
                         continue;
                     }
 
                     var newLineDebit = '', newLineCredit = '';
 
-                    if (jsonAccounting[currentBook + ";" + i][j]['columna'] == 'debit') {
+                    
+                    
+                    var debitAccount = jsonCuentas[Account]['debit'];
+                    var creditAccount = jsonCuentas[Account]['credit'];
+
+                    if (hasAccountMapping) {
+                        debitAccount = setAccount(debitAccount,globalAccountMappings,itemAccountMapping);
+                        creditAccount = setAccount(creditAccount,globalAccountMappings,itemAccountMapping);;
+                    }
+                    if (jsonAccounting[currentBook + ";" + Account][j]['columna'] == 'debit') {
                         newLineDebit = customLines.addNewLine();
                         newLineCredit = customLines.addNewLine();
 
-                        newLineDebit.setAccountId(parseFloat(jsonCuentas[i]['debit']));
-                        newLineCredit.setAccountId(parseFloat(jsonCuentas[i]['credit']));
+                        newLineDebit.setAccountId(parseFloat(jsonCuentas[Account]['debit']));
+                        newLineCredit.setAccountId(parseFloat(jsonCuentas[Account]['credit']));
                     } else {
                         newLineCredit = customLines.addNewLine();
                         newLineDebit = customLines.addNewLine();
 
-                        newLineCredit.setAccountId(parseFloat(jsonCuentas[i]['debit']));
-                        newLineDebit.setAccountId(parseFloat(jsonCuentas[i]['credit']));
+                        newLineCredit.setAccountId(parseFloat(jsonCuentas[Account]['debit']));
+                        newLineDebit.setAccountId(parseFloat(jsonCuentas[Account]['credit']));
                     }
 
-                    newLineDebit.setDebitAmount(parseFloat(jsonAccounting[currentBook + ";" + i][j]['amount']));
-                    newLineCredit.setCreditAmount(parseFloat(jsonAccounting[currentBook + ";" + i][j]['amount']));
+                    newLineDebit.setDebitAmount(parseFloat(jsonAccounting[currentBook + ";" + Account][j]['amount']));
+                    newLineCredit.setCreditAmount(parseFloat(jsonAccounting[currentBook + ";" + Account][j]['amount']));
 
-                    var customDepartment = jsonAccounting[currentBook + ";" + i][j]['department'];
-                    var customClass = jsonAccounting[currentBook + ";" + i][j]['class'];
-                    var customLocation = jsonAccounting[currentBook + ";" + i][j]['location'];
-                    var customMemo = jsonAccounting[currentBook + ";" + i][j]['memo'];
+                    var customDepartment = jsonAccounting[currentBook + ";" + Account][j]['department'];
+                    var customClass = jsonAccounting[currentBook + ";" + Account][j]['class'];
+                    var customLocation = jsonAccounting[currentBook + ";" + Account][j]['location'];
+                    var customMemo = jsonAccounting[currentBook + ";" + Account][j]['memo'];
 
                     if ((mandatoryDepartment == true || mandatoryDepartment == 'T') && !customDepartment) {
-                        customDepartment = jsonCuentas[i]['department'];
+                        customDepartment = jsonCuentas[Account]['department'];
                     }
 
                     if ((mandatoryClass == true || mandatoryClass == 'T') && !customClass) {
-                        customClass = jsonCuentas[i]['class'];
+                        customClass = jsonCuentas[Account]['class'];
                     }
 
                     if ((mandatoryLocation == true || mandatoryLocation == 'T') && !customLocation) {
-                        customLocation = jsonCuentas[i]['location'];
+                        customLocation = jsonCuentas[Account]['location'];
                     }
 
                     if (customDepartment) {
@@ -268,4 +294,30 @@ function validarAcentos(s) {
         }
     }
     return s;
+}
+
+function transformToPrimaryBookAccount(accountId, globalAccountMappings, itemAccountMapping) {
+
+    for (var key in globalAccountMappings) {
+        if (globalAccountMappings[key].destination == accountId && key != accountId) {
+            return Number(key);
+        }
+    }
+
+    for (var key in itemAccountMapping) {
+        if (itemAccountMapping[key].destination == accountId && key != accountId) {
+            return Number(key);
+        }
+    }
+    
+    return accountId;
+}
+
+function setAccount(account, globalAccountMappings, itemAccountMapping){
+
+    var accountDestination = globalAccountMappings[account] || itemAccountMapping[account]; 
+    if(accountDestination){
+        return accountDestination.destination;
+    }
+    return account
 }

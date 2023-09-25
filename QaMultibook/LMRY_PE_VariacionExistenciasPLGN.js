@@ -26,7 +26,6 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
         country = Number(country);
         if (country == 174) {//Peru
             nlapiLogExecution("DEBUG", "bookId", book.getId());
-            nlapiLogExecution("DEBUG", "isPrimary", book.isPrimary());
             var type = transactionRecord.getRecordType();
             nlapiLogExecution("DEBUG", "typeTransaction", type);
 
@@ -179,14 +178,14 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
             if (FEAT_MAPPING == true || FEAT_MAPPING == "T") {
                 Json_GMA = obtainsAccountsGMA(book.getId(), allAccounts, transactionRecord.getFieldValue('subsidiary'), transactionRecord.getFieldValue('trandate'));
             }
-            
+            nlapiLogExecution("DEBUG", "Json_GMA", JSON.stringify(Json_GMA));
 
             //Obtiene el Item Account Mapping
             var Json_IMA = {};
             if (FEAT_MAPPING == true || FEAT_MAPPING == "T") {
                 Json_IMA = obtainsAccountsIMA(book.getId(), allAccounts, transactionRecord.getFieldValue('subsidiary'), transactionRecord.getFieldValue('trandate'));
             }
-            
+            nlapiLogExecution("DEBUG", "Json_IMA", JSON.stringify(Json_IMA));
 
             var accounts69Array = [];
 
@@ -379,7 +378,7 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
 
                                 accounts69Array.push(lineDebit, lineCredit);
                             }
-                            
+
                             if (cuentaCompras && factNoEmitAccount) {
                                 var lineDebit = {
                                     book: book.getId(),
@@ -431,7 +430,7 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
                                     newDebitLine2.setLocationId(location);
                                     newCreditLine2.setLocationId(location);
                                 }
-                                
+
                                 accounts69Array.push(lineDebit, lineCredit);
                             }
                         }
@@ -440,7 +439,7 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
             }
 
             // nlapiLogExecution("DEBUG", "accounts69Array", JSON.stringify(accounts69Array));
-            customizeGlImpactEspejo69(transactionRecord, standardLines, customLines, book, accounts69Array,Json_GMA,Json_IMA);
+            customizeGlImpactEspejo69(transactionRecord, standardLines, customLines, book, accounts69Array);
         }
     } catch (err) {
         nlapiLogExecution("ERROR", "[ customizeGlImpact ]", err);
@@ -573,7 +572,7 @@ function getAccount(Json_GMA, Json_IMA, cuentaSource, dep, cla, loc, fechaTransa
         for (line in Json_GMA) {
            
             if (line == cuentaSource) {
-                
+                nlapiLogExecution("DEBUG", "Json_GMA[" + line + "]", JSON.stringify(Json_GMA[line]));
                 if (Json_GMA[line].department != 0 && Json_GMA[line].department != null && Json_GMA[line].department != "" && Json_GMA[line].department != undefined) {
                     if (Json_GMA[line].department != dep) {
                         return cuentaSource;
@@ -602,7 +601,7 @@ function getAccount(Json_GMA, Json_IMA, cuentaSource, dep, cla, loc, fechaTransa
         }
         for (line in Json_IMA) {
             if (line == cuentaSource) {
-                
+                nlapiLogExecution("DEBUG", "Json_IMA[" + line + "]", JSON.stringify(Json_IMA[line]));
                 if (Json_IMA[line].department != 0 && Json_IMA[line].department != null && Json_IMA[line].department != "" && Json_IMA[line].department != undefined) {
                     if (Json_IMA[line].department != dep) {
                         return cuentaSource;

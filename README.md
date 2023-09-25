@@ -1,5 +1,6 @@
 Caso Decameron - Error al guardar Item Receipt
 
+En el GL Impact las cuentas espejo solo están impactando el libro primario y no el libro local
 
 
 ## Detalle técnico del error:
