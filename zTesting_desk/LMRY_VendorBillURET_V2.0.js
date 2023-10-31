@@ -31,7 +31,7 @@ define(['require', './Latam_Library/LMRY_UniversalSetting_Purchase_LBRY', 'N/rec
     './Latam_Library/LMRY_MX_Withholding_Purchase_LBRY_V2.0', './Latam_Library/LMRY_BR_UPDATE_Flete_Transaction_Field_LBRY_2.0', './Latam_Library/LMRY_Log_LBRY_V2.0', './WTH_Library/LMRY_BO_Taxes_LBRY_V2.0',
     './WTH_Library/LMRY_MX_STE_Bill_WHT_Total_LBRY_V2.0', './Latam_Library/LMRY_MX_CREATE_JsonTaxResult_LBRY_V2.0',
     './Latam_Library/LMRY_PE_STE_Purchases_Tax_Transaction_LBRY_V2.0', './WTH_Library/LMRY_CR_STE_WhtTransactionOnPurchaseByTotal_LBRY_V2.0', './Latam_Library/LMRY_BO_libWhtLines_LMRY_V2.0',
-    './Latam_Library/LMRY_Custom_ExchangeRate_Field_LBRY_V2.0.js'
+    './Latam_Library/LMRY_Custom_ExchangeRate_Field_LBRY_V2.0.js','./Latam_Library/LMRY_KofaxIntegrations_LBRY_V2.0'
   ],
 
   function(require, library_Uni_Setting, record, runtime, search, log, config, https, url, serverWidget, library, library1, libraryDIOT, Library_WHT_Transaction, ST_Library_Transaction,
@@ -39,7 +39,7 @@ define(['require', './Latam_Library/LMRY_UniversalSetting_Purchase_LBRY', 'N/rec
     LibraryTransferIva, MX_ST_TaxLibrary, MX_ST_DIOT_Library, CL_ST_TaxLibrary, libraryEcBaseAmounts, Library_BRDup, libraryNewWHTLines,
     CO_STE_TaxLibrary, CO_STE_WhtLibrary_Total, libraryTranIdCSV, AR_ST_TaxLibrary, AR_ST_Perception, AR_ST_TransFields, LibraryValidatePeriod, library_UY_Retencion,
     CO_STE_WhtLibrary_Lines, errorAPI, CL_ST_WhtLibrary_Total, MX_TaxLibrary, PA_ST_TaxLibrary, libraryIGVNoDom, MX_WhtLibrary, libraryFleteGlobales, libLog, libBoTaxes,
-    MX_STE_WhtLibrary_Total, libraryMxJsonResult, PE_STE_TaxLibrary, CR_STE_WhtLibrary_Total, BO_libWHTLines, Library_ExchangeRate_Field) {
+    MX_STE_WhtLibrary_Total, libraryMxJsonResult, PE_STE_TaxLibrary, CR_STE_WhtLibrary_Total, BO_libWHTLines, Library_ExchangeRate_Field,kofaxModule) {
 
     var scriptObj = runtime.getCurrentScript();
     var type = '';
@@ -1243,16 +1243,15 @@ define(['require', './Latam_Library/LMRY_UniversalSetting_Purchase_LBRY', 'N/rec
         var type_interface = runtime.executionContext;
         if ((type == 'create' || type == 'edit') && type_interface != 'USERINTERFACE') {
           if (["AR", "CO", "PE", "MX", "CL", "PA"].indexOf(LMRY_Result[0]) != -1) {
-            require(["./Latam_Library/LMRY_KofaxIntegrations_LBRY_V2.0", './Latam_Library/LMRY_TranID_CSV_LBRY_V2.0.js'],
-              function(kofaxModule, csvModule) {
+            
                 if (type == 'create') {
                   kofaxModule.SetCustomField_WHT_Code_VB(recordObj, LMRY_Result, licenses);
                 }
                 //recordObj.setValue("custbody_lmry_apply_wht_code", true);
                 if (featureExecuteIntegration == 'F' || featureExecuteIntegration == false) {
-                  csvModule.generateTranID(recordObj, LMRY_Result[0], licenses);
+                  libraryTranIdCSV.generateTranID(recordObj, LMRY_Result[0], licenses);
                 }     
-              });
+              
           }
         }
 

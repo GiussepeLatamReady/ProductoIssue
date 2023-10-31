@@ -25,7 +25,8 @@ define(['N/record', 'N/ui/serverWidget', 'N/search', 'N/runtime', 'N/log', 'N/co
     './Latam_Library/LMRY_CL_ST_Purchases_Tax_Transaction_LBRY_V2.0', './Latam_Library/LMRY_CL_ST_Purchases_WHT_Transaction_LBRY_V2.0', './Latam_Library/LMRY_MX_LatamTax_Purchase_LBRY_V2.0',
     './Latam_Library/LMRY_PA_ST_Purchases_Tax_Transaction_LBRY_V2.0', './WTH_Library/LMRY_TransferIva_LBRY', './Latam_Library/LMRY_MX_Withholding_Purchase_LBRY_V2.0',
     './WTH_Library/LMRY_BO_Taxes_LBRY_V2.0', './WTH_Library/LMRY_MX_STE_BillCredit_WHT_Total_LBRY_V2.0', './Latam_Library/LMRY_PE_STE_Purchases_Tax_Transaction_LBRY_V2.0', './Latam_Library/LMRY_MX_CREATE_JsonTaxResult_LBRY_V2.0',
-    './WTH_Library/LMRY_CR_STE_WhtTransactionOnPurchaseByTotal_LBRY_V2.0', './Latam_Library/LMRY_BO_libWhtLines_LMRY_V2.0', './Latam_Library/LMRY_Custom_ExchangeRate_Field_LBRY_V2.0.js'
+    './WTH_Library/LMRY_CR_STE_WhtTransactionOnPurchaseByTotal_LBRY_V2.0', './Latam_Library/LMRY_BO_libWhtLines_LMRY_V2.0', './Latam_Library/LMRY_Custom_ExchangeRate_Field_LBRY_V2.0.js',
+    './Latam_Library/LMRY_KofaxIntegrations_LBRY_V2.0'
   ],
 
   function(record, serverWidget, search, runtime, log, config, library, library1, libraryDIOT,
@@ -33,7 +34,7 @@ define(['N/record', 'N/ui/serverWidget', 'N/search', 'N/runtime', 'N/log', 'N/co
     MX_ST_TaxLibrary, ST_Library_DIOT, libraryEcBaseAmounts, Library_BRDup, CO_STE_TaxLibrary,
     CO_STE_WhtLibrary_Total, libraryTranIdCSV, AR_ST_TaxLibrary, AR_ST_Perception, AR_ST_TransFields, LibraryValidatePeriod, library_UY_Retencion,
     CO_STE_WhtLibrary_Lines, errorAPI, library_Uni_Setting, CL_ST_TaxLibrary, CL_ST_WhtLibrary_Total, MX_TaxLibrary, PA_ST_TaxLibrary, libraryTransferIva, MX_WhtLibrary, libBoTaxes,
-    MX_STE_WhtLibrary_Total, PE_STE_TaxLibrary, libraryMxJsonResult, CR_STE_WhtLibrary_Total, BO_libWHTLines, Library_ExchangeRate_Field) {
+    MX_STE_WhtLibrary_Total, PE_STE_TaxLibrary, libraryMxJsonResult, CR_STE_WhtLibrary_Total, BO_libWHTLines, Library_ExchangeRate_Field,kofaxModule) {
 
     var LMRY_script = 'LatamReady - Vendor Credit URET V2.0';
     var type = '';
@@ -1002,16 +1003,21 @@ define(['N/record', 'N/ui/serverWidget', 'N/search', 'N/runtime', 'N/log', 'N/co
         var type_interface = runtime.executionContext;
         if ((type == 'create' || type == 'edit') && type_interface != 'USERINTERFACE') {
           if (["AR", "CO", "PE", "MX", "CL", "PA"].indexOf(LMRY_Result[0]) != -1) {
-            require(["./Latam_Library/LMRY_KofaxIntegrations_LBRY_V2.0", './Latam_Library/LMRY_TranID_CSV_LBRY_V2.0.js'],
-              function(kofaxModule, csvModule) {
+            try {
+              
                 if (type == 'create') {
                   kofaxModule.SetCustomField_WHT_Code_VC(recordObj, LMRY_Result, licenses);
                 }        
                 //recordObj.setValue("custbody_lmry_apply_wht_code", true);
+                log.error("featureExecuteIntegration gadp",featureExecuteIntegration)
                 if (featureExecuteIntegration == 'F' || featureExecuteIntegration == false) {
-                  csvModule.generateTranID(recordObj, LMRY_Result[0], licenses);
+                  libraryTranIdCSV.generateTranID(recordObj, LMRY_Result[0], licenses);
                 }
-              });
+              
+            } catch (error) {
+              log.error("error require",error)
+            }
+            
           }
         }
 
