@@ -1,6 +1,4 @@
-CC2300498 - 3237 Correo de errores
-
-Sales error al generar el tranid
+ENCONTRO TRANACCIONES FILTRADS CON 0
 
 
 ## Detalle técnico del error:
