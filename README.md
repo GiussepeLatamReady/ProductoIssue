@@ -54,14 +54,15 @@ ENCONTRO TRANACCIONES FILTRADS CON 0
 
 
 ## Detalle técnico del error:
-   No genera el tranid con check desactivado
-
+   El error se da debido a que no se valida el feature foreign currency management (enable feature - tab accounting) al momento de obtener la moneda del libro contable seleccionado.
 
 ## Pasos para la ejecución del error:
-    Crear transacciones por csv con version de anterior
+    ir a una factura  y dar click al boton de cabcera "CO-PRINT GL WHT", luego esocger el libro contable y formato.
 ## Bundles implicados:
     Manager 37714 
 ## Script modificados:
-
+    Name:LatamReady - CO WHT GL Impact STLT
+    Id:customscript_lmry_co_wht_gl_impact_stlt
+    File:LMRY_CO_WHT_GL IMPACT_STLT.js
 ## Especificación de la modificación:
-    Se cambio el llamado de la libreria
+    Se agregó la validación del feature foreign currency management en el script especificado.
