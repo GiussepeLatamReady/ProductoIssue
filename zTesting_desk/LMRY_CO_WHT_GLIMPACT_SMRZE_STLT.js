@@ -40,6 +40,7 @@ var featuresubs = context.getFeature('SUBSIDIARIES');
 var FeaDepa = context.getFeature('DEPARTMENTS');
 var FeaLoca = context.getFeature('LOCATIONS');
 var FeaClas = context.getFeature('CLASSES');
+var foreigncurrencymanagement=nlapiGetContext().getFeature('foreigncurrencymanagement')
 var EmpName = '';
 var EmpApro = '';
 var today = nlapiDateToString(new Date());
@@ -614,7 +615,7 @@ function creaTableDos() {
             }
             // Nombre del Libro
             BookName = '';
-            if (bookI) {
+            if (bookI && foreigncurrencymanagement) {
                 searchresult = results[0];
                 Tran_Glnu = searchresult.getValue('glnumber', 'accountingTransaction');
                 BookName = searchresult.getText('accountingbook', 'accountingTransaction');
@@ -1358,7 +1359,7 @@ function Create_GLWHT_CSV(request, response) {
                 }
                 // Nombre del Libro
                 var BookName = "";
-                if (bookI) {
+                if (bookI && foreigncurrencymanagement) {
                     searchresult = results[0];
                     BookName = searchresult.getText(
                         "accountingbook",
@@ -1636,7 +1637,7 @@ function Create_GLWHT_XLS(request, response) {
                 }
                 // Nombre del Libro
                 var BookName = '';
-                if (bookI) {
+                if (bookI  && foreigncurrencymanagement) {
                     searchresult = results[0];
                     BookName = searchresult.getText('accountingbook', 'accountingTransaction');
                     NameCurren = searchresult.getValue('basecurrency', 'accountingTransaction');
@@ -1812,7 +1813,6 @@ function getCountry() {
 
 function getCurrency() {
     var subsidiary = nlapiLookupField('transaction', recId, 'subsidiary');
-    var foreigncurrencymanagement=nlapiGetContext().getFeature('foreigncurrencymanagement')
     if (bookI != 0 && foreigncurrencymanagement) {
         var results = nlapiSearchRecord("accountingbook", null,
             [
@@ -1824,12 +1824,11 @@ function getCurrency() {
                 new nlobjSearchColumn("currency")
             ]
         );
-
+        
         if (results && results.length) {
             currency['name'] = results[0].getText('currency');
             currency['value'] = results[0].getValue('currency');
         }
-        
     } else {
         var idcurrency = nlapiLookupField('subsidiary', subsidiary, 'currency');
         currency['value'] = idcurrency;
