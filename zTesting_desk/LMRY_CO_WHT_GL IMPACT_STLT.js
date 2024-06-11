@@ -600,11 +600,17 @@ function creaTableDos() {
             }
             // Nombre del Libro
             BookName = '';
-            if (bookI && foreigncurrencymanagement) {
+            if (bookI) {
                 searchresult = results[0];
                 Tran_Glnu = searchresult.getValue('glnumber', 'accountingTransaction');
                 BookName = searchresult.getText('accountingbook', 'accountingTransaction');
-                NameCurren = searchresult.getValue('basecurrency', 'accountingTransaction');
+
+                if (foreigncurrencymanagement) {
+                    NameCurren = searchresult.getValue('basecurrency', 'accountingTransaction');
+                }else{
+                    NameCurren = searchresult.getText('currency');
+                }
+                
             } else {
                 NameCurren = searchresult.getText('currency');
             }
@@ -877,9 +883,15 @@ function Create_GLWHT_CSV(request, response) {
                 // Nombre del Libro
                 var BookName = '';
                 var searchresult = results[0];
-                if (bookI && foreigncurrencymanagement) {
+                if (bookI) {
                     BookName = searchresult.getText('accountingbook', 'accountingTransaction');
-                    NameCurren = searchresult.getValue('basecurrency', 'accountingTransaction');
+
+                    if (foreigncurrencymanagement) {
+                        NameCurren = searchresult.getValue('basecurrency', 'accountingTransaction');
+                    }else{
+                        NameCurren = searchresult.getText('currency');
+                    }
+                    
                 } else {
                     NameCurren = searchresult.getText('currency');
                 }
@@ -1159,9 +1171,14 @@ function Create_GLWHT_XLS(request, response) {
                 // Nombre del Libro
                 var BookName = '';
                 var searchresult = results[0];
-                if (bookI && foreigncurrencymanagement) {
+                if (bookI) {
                     BookName = searchresult.getText('accountingbook', 'accountingTransaction');
-                    NameCurren = searchresult.getValue('basecurrency', 'accountingTransaction');
+                    if (foreigncurrencymanagement) {
+                        NameCurren = searchresult.getValue('basecurrency', 'accountingTransaction');
+                    }else{
+                        NameCurren = searchresult.getText('currency');
+                    }
+                    
                 } else {
                     NameCurren = searchresult.getText('currency');
                 }
