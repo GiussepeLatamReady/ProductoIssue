@@ -1758,7 +1758,7 @@ function Create_GLWHT_XLS(request, response) {
 
         // // Detalle del total
         FileBodyXLS += '\r\n<Row ss:AutoFitHeight="0">';
-        FileBodyXLS += '<Cell ss:StyleID="s76"><Data ss:Type="String">' + 'TOTAL' + '</Data></Cell>';
+        FileBodyXLS += '<Cell ss:MergeAcross="1" ss:StyleID="s76"><Data ss:Type="String">' + 'TOTAL' + '</Data></Cell>';
         FileBodyXLS += '<Cell ' + _StyleNum + '><Data ss:Type="Number">' + Math.abs(totaldebit) + '</Data></Cell>';
         FileBodyXLS += '<Cell ' + _StyleNum + '><Data ss:Type="Number">' + Math.abs(totalcredit) + '</Data></Cell>';
 
