@@ -1326,7 +1326,7 @@ function Create_GLWHT_XLS(request, response) {
         if (bookI) {
             FileBodyXLS += '<Cell ss:StyleID="s76"><Data ss:Type="String">' + '' + '</Data></Cell>';
         }
-        FileBodyXLS += '<Cell ss:StyleID="s76"><Data ss:Type="String">' + 'Total' + '</Data></Cell>';
+        FileBodyXLS += '<Cell ss:MergeAcross="1" ss:StyleID="s76"><Data ss:Type="String">' + 'Total' + '</Data></Cell>';
         FileBodyXLS += '<Cell ><Data ss:Type="Number">' + Math.abs(sumDebit) + '</Data></Cell>';
         FileBodyXLS += '<Cell ><Data ss:Type="Number">' + Math.abs(sumCredit) + '</Data></Cell>';
         FileBodyXLS += '\r\n</Row>';
