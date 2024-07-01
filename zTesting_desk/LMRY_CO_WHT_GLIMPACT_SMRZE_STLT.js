@@ -813,7 +813,7 @@ function ObtieneAccounts(RelaID) {
                     }
                     //2. Account: Description
                     if (objResult[i].getValue(columns[2]) != '- None -') {
-                        arrAuxiliar[2] = objResult[i].getValue(columns[2]);
+                        arrAuxiliar[2] = objResult[i].getValue(columns[2]).replace(/,/g, ' ');
                     } else {
                         arrAuxiliar[2] = '';
                     }
@@ -953,7 +953,7 @@ function ObtieneAccounts(RelaID) {
                     }
                     //2. Account: Description
                     if (objResult[i].getValue(columns[2]) != '- None -') {
-                        arrAuxiliar[2] = objResult[i].getValue(columns[2]);
+                        arrAuxiliar[2] = objResult[i].getValue(columns[2]).replace(/,/g, ' ');
                     } else {
                         arrAuxiliar[2] = '';
                     }
