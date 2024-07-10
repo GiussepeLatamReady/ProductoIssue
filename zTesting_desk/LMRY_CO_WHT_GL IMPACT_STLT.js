@@ -158,7 +158,7 @@ function Create_GLWHT_PDF(request, response) {
         } else {
             Body_XML_PDF += '<td>Created by :</td>';
         }
-        Body_XML_PDF += '<td>' + nlapiEscapeXML(EmpName) + '</td>';
+        Body_XML_PDF += '<td>' + cleanText(nlapiEscapeXML(EmpName)) + '</td>';
         Body_XML_PDF += '<td>';
         Body_XML_PDF += '|';
         Body_XML_PDF += '</td>';
@@ -628,7 +628,7 @@ function creaTableDos() {
         }
         for (var i = 0; results != null && i < results.length; i++) {
             searchresult = results[i];
-            var EntityName = nlapiEscapeXML(searchresult.getText('name'));
+            var EntityName =cleanText(nlapiEscapeXML(searchresult.getText('name'))) ;
             // Lineas de detalle del GL
             html += "<tr>";
             // Descripcion de la cuenta
@@ -676,7 +676,7 @@ function creaTableDos() {
             html += "<td " + Styl2 + ">" + FormatoNumero(creditamount) + "</td>";
 
             html += "<td " + Styl3 + ">" + nlapiEscapeXML(searchresult.getValue('memo')) + "</td>";
-            html += "<td " + Styl3 + ">" + nlapiEscapeXML(EntityName) + " </td>";
+            html += "<td " + Styl3 + ">" + nlapiEscapeXML(EntityName)+ " </td>";
             // Campo Nuevo Codigo de impuesto
             if (EntityName == '' || EntityName == null || searchresult.getValue('memo') == "VAT") {
                 html += "<td " + Styl3 + "></td>";
@@ -808,7 +808,7 @@ function Create_GLWHT_CSV(request, response) {
             NameSubsid = configpage.getFieldValue('companyname');
             configpage = null;
         }
-
+        NameSubsid = cleanText(NameSubsid);
         // Envia al log del script
         nlapiLogExecution('ERROR', 'Create_GLWHT_CSV', 'NameSubsid: ' + NameSubsid);
 
@@ -908,7 +908,7 @@ function Create_GLWHT_CSV(request, response) {
             // Resultados de la busqueda
             for (var i = 0; results != null && i < results.length; i++) {
                 var searchresult = results[i];
-                var EntityName = searchresult.getText('name');
+                var EntityName = cleanText(searchresult.getText('name'));
                 var nameacco = '';
                 var debitamount = 0;
                 var creditamount = 0;
@@ -1151,7 +1151,7 @@ function Create_GLWHT_XLS(request, response) {
             NameComp = configpage.getFieldValue('companyname');
             configpage = null;
         }
-        NameSubsid = nlapiEscapeXML(NameComp);
+        NameSubsid = cleanText(nlapiEscapeXML(NameComp));
 
         // Envia al log del script
         nlapiLogExecution('ERROR', 'Create_GLWHT_XLS', 'NameSubsid: ' + NameSubsid);
@@ -1198,7 +1198,7 @@ function Create_GLWHT_XLS(request, response) {
             // Resultados de la busqueda
             for (var i = 0; results != null && i < results.length; i++) {
                 var searchresult = results[i];
-                var EntityName = nlapiEscapeXML(searchresult.getText('name'));
+                var EntityName = cleanText(nlapiEscapeXML(searchresult.getText('name')));
                 var nameacco = '';
                 var debitamount = 0;
                 var creditamount = 0;
@@ -1369,7 +1369,7 @@ function Get_Line_PDFCSVXLS(RelaID, BookName, NameSubsid, EntityTAX, currencyPre
             // Resultados de la busqueda
             for (var i = 0; results != null && i < results.length; i++) {
                 searchresult = results[i];
-                var EntityName = searchresult.getText('name');
+                var EntityName = cleanText(searchresult.getText('name'));
                 var nameacco = '';
                 var debitamount = 0;
                 var creditamount = 0;
@@ -1383,7 +1383,7 @@ function Get_Line_PDFCSVXLS(RelaID, BookName, NameSubsid, EntityTAX, currencyPre
                     } else {
                         nameacco = searchresult.getValue('number', 'account');
                         nameacco += " ";
-                        nameacco += searchresult.getValue('description', 'account');
+                        nameacco += cleanText(searchresult.getValue('description', 'account'));
 
                     }
                     // Importes Debit and Credit
@@ -1455,7 +1455,7 @@ function Get_Line_PDFCSVXLS(RelaID, BookName, NameSubsid, EntityTAX, currencyPre
                     FileBodyRes += creditamount + FileDemi;
                     FileBodyRes += NameCurren + FileDemi;
                     FileBodyRes += TraPosting + FileDemi;
-                    FileBodyRes += searchresult.getValue('Memo') + FileDemi;
+                    FileBodyRes += cleanText(searchresult.getValue('Memo')) + FileDemi;
                     FileBodyRes += EntityName + FileDemi;
                     // Campo Nuevo Codigo de impuesto
                     if (EntityName == '' || EntityName == null || searchresult.getValue('memo') == "VAT") {
@@ -1495,7 +1495,7 @@ function Get_Line_PDFCSVXLS(RelaID, BookName, NameSubsid, EntityTAX, currencyPre
                     FileBodyRes += '\r\n<Cell><Data ss:Type="Number">' + Math.abs(creditamount) + '</Data></Cell>';
                     FileBodyRes += '\r\n<Cell><Data ss:Type="String">' + NameCurren + '</Data></Cell>';
                     FileBodyRes += '\r\n<Cell><Data ss:Type="String">' + TraPosting + '</Data></Cell>';
-                    FileBodyRes += '\r\n<Cell><Data ss:Type="String">' + nlapiEscapeXML(searchresult.getValue('Memo')) + '</Data></Cell>';
+                    FileBodyRes += '\r\n<Cell><Data ss:Type="String">' + cleanText(nlapiEscapeXML(searchresult.getValue('Memo'))) + '</Data></Cell>';
                     FileBodyRes += '\r\n<Cell><Data ss:Type="String">' + nlapiEscapeXML(EntityName) + '</Data></Cell>';
                     // Campo Nuevo Codigo de impuesto
                     if (EntityName == '' || EntityName == null || searchresult.getValue('memo') == "VAT") {
@@ -1627,4 +1627,17 @@ function FormatoNumero(pNumero, pSimbolo) {
     }
   
     return valor;
+  }
+
+
+  function cleanText(characters) {
+        characters = characters.replace(/&quot;/g, '"');
+        characters = characters.replace(/&gt;/g, '>');
+        characters = characters.replace(/&lt;/g, '<');
+        characters = characters.replace(/&amp;/g, '');
+        characters = characters.replace(/&amp;/g, '');
+        characters = characters.replace(/gt;/g, '>');
+        characters = characters.replace(/lt;/g, '<');
+        characters = characters.replace(',', '');
+    return characters;
   }

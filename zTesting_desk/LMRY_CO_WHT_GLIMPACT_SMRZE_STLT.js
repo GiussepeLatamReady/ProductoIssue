@@ -636,7 +636,7 @@ function creaTableDos() {
         // Datos para one world edition
         for (var i = 0; resultFinal != null && i < resultFinal.length; i++) {
             searchresult = results[i];
-            var EntityName = resultFinal[i][7];
+            var EntityName = cleanText(resultFinal[i][7]);
             // Lineas de detalle del GL
             html += "<tr>";
             // Descripcion de la cuenta
@@ -1275,7 +1275,7 @@ function Create_GLWHT_CSV(request, response) {
             NameSubsid = configpage.getFieldValue("companyname");
             configpage = null;
         }
-
+        NameSubsid = cleanText(NameSubsid);
         // Envia al log del script
         nlapiLogExecution("ERROR", "Create_GLWHT_CSV", "NameSubsid: " + NameSubsid);
 
@@ -1394,7 +1394,7 @@ function Create_GLWHT_CSV(request, response) {
                 resultFinalCSV != null && i < resultFinalCSV.length;
                 i++
             ) {
-                var EntityName = resultFinalCSV[i][7];
+                var EntityName = cleanText(resultFinalCSV[i][7]);
                 var nameacco = "";
                 var debitamount = 0;
                 var creditamount = 0;
@@ -1616,8 +1616,7 @@ function Create_GLWHT_XLS(request, response) {
             NameComp = configpage.getFieldValue('companyname');
             configpage = null;
         }
-        NameSubsid = nlapiEscapeXML(NameComp);
-
+        NameSubsid = cleanText(nlapiEscapeXML(NameComp));
         // Envia al log del script
         nlapiLogExecution('ERROR', 'Create_GLWHT_XLS', 'NameSubsid: ' + NameSubsid);
 
@@ -1670,7 +1669,7 @@ function Create_GLWHT_XLS(request, response) {
             // Resultados de la busqueda
             for (var i = 0; resultFinalXLS != null && i < resultFinalXLS.length; i++) {
 
-                var EntityName = nlapiEscapeXML(resultFinalXLS[i][7]);
+                var EntityName = cleanText(nlapiEscapeXML(resultFinalXLS[i][7]));
                 var nameacco = '';
                 var debitamount = 0;
                 var creditamount = 0;
@@ -1862,4 +1861,16 @@ function roundByCurrency(amount, currencyPrecision) {
     }
 
     return roundedAmount;
+}
+
+function cleanText(characters) {
+    characters = characters.replace(/&quot;/g, '"');
+    characters = characters.replace(/&gt;/g, '>');
+    characters = characters.replace(/&lt;/g, '<');
+    characters = characters.replace(/&amp;/g, '');
+    characters = characters.replace(/&amp;/g, '');
+    characters = characters.replace(/gt;/g, '>');
+    characters = characters.replace(/lt;/g, '<');
+    characters = characters.replace(',', '');
+return characters;
 }
