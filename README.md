@@ -1,10 +1,10 @@
 
-# [CP2400314    4265: CO - Error de impresión PDF + GL WHT con feature](https://docs.google.com/document/d/12uIMF_EN3Tfa4DdkY0WSw3XncpxT0Yt-xFQSuL9hlP0/edit)
+# [CP2400485   ]()
 
 
 ## Description of the Requirement
 
-Sin embargo, al momento de utilizar el botón “CO-PRINT GL WHT” y seleccionar cualquiera de las opciones (PDF, CSV o XLS) de uno de los libros contables. Vemos que la pagina se queda en blanco:
+
 
 
 ## Description of the solution
