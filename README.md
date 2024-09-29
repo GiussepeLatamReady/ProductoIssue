@@ -54,15 +54,13 @@ ENCONTRO TRANACCIONES FILTRADS CON 0
 
 
 ## Detalle técnico del error:
-   El error se da debido a que no se valida el feature foreign currency management (enable feature - tab accounting) al momento de obtener la moneda del libro contable seleccionado.
+   EL campo LATAM - MX CAC se visualiza al momento de editar la cuenta contable aunque la subsidiria relacionada del pais de Mexico este desactivada.
 
 ## Pasos para la ejecución del error:
-    ir a una factura  y dar click al boton de cabcera "CO-PRINT GL WHT", luego esocger el libro contable y formato.
+    Editar una cuenta contable asociada a una subsidiaria de mexico inactivada.
 ## Bundles implicados:
     Manager 37714 
 ## Script modificados:
-    Name:LatamReady - CO WHT GL Impact STLT
-    Id:customscript_lmry_co_wht_gl_impact_stlt
-    File:LMRY_CO_WHT_GL IMPACT_STLT.js
+    LMRY_AccountURET_V2.0.js
 ## Especificación de la modificación:
-    Se agregó la validación del feature foreign currency management en el script especificado.
+    Se valida la existencia para la  insercion de datos del campo LATAM - MX CAC cuando la cuenta sea editable.

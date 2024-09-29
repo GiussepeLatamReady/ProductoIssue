@@ -20,7 +20,7 @@ var filterDepartment = false;
 function customizeGlImpact(transactionRecord, standardLines, customLines, book) {
 
     try {
-
+        nlapiLogExecution("DEBUG", "execute", "start");
         if (featureOW) {
             var country = transactionRecord.getFieldText("custbody_lmry_subsidiary_country");
             var subsidiaria = transactionRecord.getFieldValue('subsidiary');
@@ -46,7 +46,7 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
         }
 
         filterDepartment = getAuthorization(864, licenses);
-        nlapiLogExecution("DEBUG", "filterDepartment", filterDepartment);
+        //nlapiLogExecution("DEBUG", "filterDepartment", filterDepartment);
 
         if (filterDepartment == true && (featureDep == 'F' || featureDep == false)) {
             return true;
@@ -67,12 +67,13 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
         }
 
         var hasAccountMapping = !book.isPrimary() && (FEAT_ACC_MAPPING == true || FEAT_ACC_MAPPING == "T");
-
+        nlapiLogExecution("DEBUG", "currentBook", book.getId());
         //se inicializa denuevo le json de items
         var items = [];
         if (type == "vendorbill") {
             items = getItems(transactionRecord);
         }
+
         nlapiLogExecution("DEBUG", "items", JSON.stringify(items));
 
 
@@ -85,7 +86,7 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
         nlapiLogExecution("DEBUG", "jsonCuentas", JSON.stringify(jsonCuentas));
 
         var globalAccountMappings = {}, itemAccountMapping = {};
-
+        nlapiLogExecution("DEBUG", "hasAccountMapping", hasAccountMapping);
         if (hasAccountMapping) {
             globalAccountMappings = getGlobalAccountMappings(transactionRecord, book, jsonAccounting, jsonCuentas);
             nlapiLogExecution("DEBUG", "globalAccountMappings", JSON.stringify(globalAccountMappings));
@@ -95,14 +96,12 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
         }
 
         var JsonItem = {};
-        //se hace una busqueda para saber que articulos deberia de aparecer
-        nlapiLogExecution("DEBUG", "transactionRecord.getFieldValue('ordertype')", transactionRecord.getFieldValue('ordertype'));
-        if (items.length && transactionRecord.getFieldValue('ordertype') == 'PurchOrd') {
+        var processWithoutPO = validatePluginNoPO(subsidiaria);
+       
+        if (items.length && (transactionRecord.getFieldValue('ordertype') == 'PurchOrd')) {
             var cantidad = Math.ceil(items.length / 1000);
-            nlapiLogExecution("DEBUG", "cantidad", cantidad);
             for (var i = 0; i < cantidad; i++) {
                 var Arraux = items.slice(1000 * (i), 1000 * (i + 1));
-                nlapiLogExecution("DEBUG", "Arraux", Arraux);
                 var filters = [
                     ["internalid", "anyof", Arraux],
                     "AND",
@@ -112,7 +111,7 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
                 var columns = [];
                 columns[0] = new nlobjSearchColumn("internalid")
                 var serviceitemSearch = nlapiSearchRecord("item", null, filters, columns);
-                nlapiLogExecution("DEBUG", "serviceitemSearch", serviceitemSearch);
+
                 for (var i = 0; serviceitemSearch != null && i < serviceitemSearch.length; i++) {
                     var searchresult = serviceitemSearch[i];
                     var id = searchresult.getValue('internalid')
@@ -132,8 +131,6 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
 
         //CREADO DE LINEAS GL
         var currentBook = book.getId();
-        nlapiLogExecution("DEBUG", "currentBook", currentBook);
-
 
         if (jsonAccounting.hasOwnProperty(currentBook)) {
             for (var i = 0; i < jsonAccounting[currentBook].length; i++) {
@@ -145,27 +142,34 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
                 var item = jsonAccounting[currentBook][i].item || "";
 
                 var account = jsonAccounting[currentBook][i].account;
-
+                nlapiLogExecution("DEBUG", "account obj", JSON.stringify(jsonAccounting[currentBook][i]));
                 if (amount <= 0.00) {
+                    nlapiLogExecution("DEBUG", "amount", "stop");
                     continue;
                 }
                 //se comprueba si existe el item de la linea en el json de articulos con el devengo activado
-                if (JsonItem[item]) continue;
+                if (JsonItem[item]) {
+                    nlapiLogExecution("DEBUG", "JsonItem", "stop");
+                    continue;
+                }
 
 
                 var primaryAccount = account;
                 if (hasAccountMapping) {
                     primaryAccount = transformToPrimaryBookAccount(account, globalAccountMappings, itemAccountMapping, customDepartment, customDepartment, customLocation);
+                    nlapiLogExecution("DEBUG", "account", account);
+                    nlapiLogExecution("DEBUG", "primaryAccount", primaryAccount);
                 }
 
 
                 var configObj = jsonCuentas[primaryAccount];
-
+                
                 if (filterDepartment) {
                     configObj = jsonCuentas[primaryAccount + ";" + department] || jsonCuentas[primaryAccount + ";"] || "";
                 }
-
+                nlapiLogExecution("DEBUG", "configObj", JSON.stringify(configObj));
                 if (!configObj) {
+                    nlapiLogExecution("DEBUG", "configObj", "stop");
                     continue;
                 }
 
@@ -197,14 +201,15 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
                 }
 
                 if (!debitAccount && !creditAccount) {
+                    nlapiLogExecution("DEBUG", "Account diferents", "stop");
                     continue;
                 }
-
-
+                nlapiLogExecution("DEBUG", "Creacion de linea", "start");
+                nlapiLogExecution("DEBUG", "Column", jsonAccounting[currentBook][i]['columna']);
                 if (jsonAccounting[currentBook][i]['columna'] == 'debit') {
                     newLineDebit = customLines.addNewLine();
                     newLineCredit = customLines.addNewLine();
-
+                    
                     newLineDebit.setAccountId(parseFloat(debitAccount));
                     newLineCredit.setAccountId(parseFloat(creditAccount));
                 } else {
@@ -214,11 +219,10 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
                     newLineCredit.setAccountId(parseFloat(debitAccount));
                     newLineDebit.setAccountId(parseFloat(creditAccount));
                 }
-
                 newLineDebit.setDebitAmount(parseFloat(amount));
                 newLineCredit.setCreditAmount(parseFloat(amount));
-
-
+                nlapiLogExecution("DEBUG", "amount line", amount);
+                nlapiLogExecution("DEBUG", "currentBook line", book.getId());
                 if (customDepartment) {
                     newLineDebit.setDepartmentId(parseFloat(customDepartment));
                     newLineCredit.setDepartmentId(parseFloat(customDepartment));
@@ -233,16 +237,17 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
                     newLineDebit.setLocationId(parseFloat(customLocation));
                     newLineCredit.setLocationId(parseFloat(customLocation));
                 }
-
+                nlapiLogExecution("DEBUG", "Creacion de linea", "end");
                 /*if(customMemo){
                   newLineDebit.setMemo(customMemo);
                   newLineCredit.setMemo(customMemo);
                 }*/
-
+                  
 
             }
+            
         }
-
+        nlapiLogExecution("DEBUG", "execute", "end");
 
     } catch (err) {
         nlapiLogExecution('Error', 'Error', err);
@@ -269,8 +274,9 @@ function getAccountConfig(transactionRecord, jsonAccounting) {
     if (accountIds.length) {
         var subsidiary = transactionRecord.getFieldValue("subsidiary");
         var filtrosCuentas = [];
+        
         filtrosCuentas[0] = new nlobjSearchFilter('isinactive', null, 'is', 'F');
-        filtrosCuentas[1] = new nlobjSearchFilter('custrecord_lmry_pe_espejo_subsidiary', null, 'is', subsidiary);
+        filtrosCuentas[1] = new nlobjSearchFilter('custrecord_lmry_pe_espejo_subsidiary', null, 'is', subsidiary);        
         filtrosCuentas[2] = new nlobjSearchFilter("custrecord_lmry_pe_espejo_sourceacc", null, "anyof", accountIds);
         //filtrosCuentas[2] = new nlobjSearchFilter ('isinactive',null,'is','F');
 
@@ -817,4 +823,21 @@ function transformToPrimaryBookAccount(accountId, globalAccountMappings, itemAcc
     }
 
     return accountId;
+}
+
+function validatePluginNoPO(subsidiary){
+    var accountFilters = [];
+    var accountColumns = [];
+    var processWithoutPO = false
+    accountFilters[0] = new nlobjSearchFilter('isinactive', null, 'is', 'F');
+    accountFilters[1] = new nlobjSearchFilter('custrecord_lmry_setuptax_subsidiary', null, 'is', subsidiary);
+    
+    accountColumns[0] = new nlobjSearchColumn('custrecord_lmry_setup_active_plugin_bill');
+    var accountSearch = nlapiCreateSearch("customrecord_lmry_setup_tax_subsidiary", accountFilters, accountColumns);
+    accountSearch = accountSearch.runSearch();
+    var accountResults = accountSearch.getResults(0, 1);
+    if (accountResults && accountResults.length > 0) {
+        processWithoutPO = accountResults[0].getValue('custrecord_lmry_setup_active_plugin_bill');
+    }
+    return processWithoutPO === "T" || processWithoutPO === true;
 }
