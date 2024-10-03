@@ -98,7 +98,6 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
 
         //Items caso            
         var jsonLines = getLines(transactionRecord);
-
         var groupedLines = groupLines(jsonLines);
 
         
@@ -211,22 +210,16 @@ function getLines(transactionRecord) {
         var location = transactionRecord.getLineItemValue('item', 'location', i + 1);
         var _class = transactionRecord.getLineItemValue('item', 'class', i + 1);
         var taxcode = transactionRecord.getLineItemValue('item', 'taxcode', i + 1);
-        var amount = transactionRecord.getLineItemValue('item', 'amount', i + 1);
-        var taxrate = transactionRecord.getLineItemValue('item', 'taxrate1', i + 1);
         var lineuniquekey = transactionRecord.getLineItemValue('item', 'lineuniquekey', i + 1);
 
-
-        taxrate = parseFloat(taxrate.replace("%", "")) / 100;
-        var taxamount = Math.round(amount * taxrate * 10) / 10;
+        var taxamount = Number(transactionRecord.getLineItemValue('item', 'tax1amt', i + 1));
         if (!jsonLines[lineuniquekey]) {
             jsonLines[lineuniquekey] = {
                 "department": department,
                 "location": location,
                 "class": _class,
                 "taxcode": taxcode,
-                "amount": amount,
                 "debitamount": taxamount,
-                "taxrate": taxrate,
                 "item": iditem
             }
         }
