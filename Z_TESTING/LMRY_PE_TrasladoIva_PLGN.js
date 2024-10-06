@@ -98,12 +98,13 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
 
         //Items caso            
         var jsonLines = getLines(transactionRecord);
+        nlapiLogExecution('ERROR', 'jsonLines',  JSON.stringify(jsonLines));
         var groupedLines = groupLines(jsonLines);
-
+        nlapiLogExecution('ERROR', 'groupedLines',  JSON.stringify(groupedLines));
         
         //Json con los Datos del GL Impact
         var JsonData = joinDetailsLines(groupedLines);
-       
+        nlapiLogExecution('ERROR', 'JsonData', JSON.stringify(JsonData));
         //Obtiene el Global Account Mapping
         if (featuremultibook) {
             obtainsAccounts(book.getId());
@@ -174,30 +175,79 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
     }
 }
 
-function groupLines(jsonLines){
+function groupLines(jsonLines) {
+    var context = nlapiGetContext();
+    var departmentMandatory = context.getPreference('DEPTMANDATORY');
+    var classMandatory = context.getPreference('CLASSMANDATORY');
+    var locationMandatory = context.getPreference('LOCMANDATORY');
+    var setupTaxSubsidiary = getSetupTaxSubsidiary();
+    nlapiLogExecution('ERROR', 'setupTaxSubsidiary', JSON.stringify(setupTaxSubsidiary));
+
     var groupTaxcode = {};
+
+    // Agrupar las líneas por código de impuestos
     for (var lineuniquekey in jsonLines) {
-        var item = jsonLines[lineuniquekey]
-        var key = JSON.stringify({
-                    tx:item["taxcode"],
-                    dp:item["department"],
-                    cl:item["class"],
-                    lc:item["location"]
-                });
-        
+        var item = jsonLines[lineuniquekey];
+        var key = item.taxcode;
         if (!groupTaxcode[key]) {
             groupTaxcode[key] = item;
-        }else{
-            groupTaxcode[key].debitamount += jsonLines[lineuniquekey]["debitamount"];
+        } else {
+            groupTaxcode[key].debitamount += item.debitamount;
         }
     }
-    
-    var groupedLines = []
+    nlapiLogExecution('ERROR', 'groupTaxcode', JSON.stringify(groupTaxcode));
+    // Asignar valores de departamento, clase y ubicación
+    var groupedLines = [];
     for (var key in groupTaxcode) {
+        if (departmentMandatory) {
+            if (setupTaxSubsidiary.department) {
+                groupTaxcode[key]["department"] = setupTaxSubsidiary.department;
+            }
+        }else{
+            groupTaxcode[key]["department"] = "";
+        }
+        if (classMandatory) {
+            if (setupTaxSubsidiary.class) {
+                groupTaxcode[key]["class"] = setupTaxSubsidiary.class;
+            }
+        }else{
+            groupTaxcode[key]["class"] = "";
+        }
+        if (locationMandatory) {
+            if (setupTaxSubsidiary.location) {
+                groupTaxcode[key]["location"] = setupTaxSubsidiary.location;
+            }
+        }else{
+            groupTaxcode[key]["location"] = "";
+        }
         groupedLines.push(groupTaxcode[key]);
     }
 
     return groupedLines;
+}
+
+
+
+function getSetupTaxSubsidiary() {
+    var setupTaxSubsidiary = {};
+    var filters = [];
+    filters[0] = new nlobjSearchFilter('isinactive', null, 'is', 'F');
+    filters[1] = new nlobjSearchFilter('custrecord_lmry_setuptax_subsidiary', null, 'is', lmrySubsidiaryId);
+
+    var columns = [];
+    columns[0] = new nlobjSearchColumn('custrecord_lmry_setuptax_department');
+    columns[1] = new nlobjSearchColumn('custrecord_lmry_setuptax_class');
+    columns[2] = new nlobjSearchColumn('custrecord_lmry_setuptax_location');
+
+    var searchSetupTax = nlapiCreateSearch("customrecord_lmry_setup_tax_subsidiary", filters, columns);
+    var resultSetupTax = searchSetupTax.runSearch().getResults(0, 1);
+
+    if (resultSetupTax && resultSetupTax.length) {
+        setupTaxSubsidiary["department"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_department');
+        setupTaxSubsidiary["class"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_class');
+        setupTaxSubsidiary["location"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_location');
+    }
+    return setupTaxSubsidiary;
 }
 
 function getLines(transactionRecord) {
@@ -315,7 +365,7 @@ function getAccount(cuentaSource, dep, cla, loc) {
     try {
         for (line in Json_GMA) {
             if (line == cuentaSource) {
-                nlapiLogExecution('ERROR', 'Json_GMA['+line+']', JSON.stringify(Json_GMA[line]));
+                //nlapiLogExecution('ERROR', 'Json_GMA['+line+']', JSON.stringify(Json_GMA[line]));
                 if (Json_GMA[line].department != 0 && Json_GMA[line].department != null && Json_GMA[line].department != '' && Json_GMA[line].department != undefined) {
                     if (Json_GMA[line].department != dep) {
                         return cuentaSource;

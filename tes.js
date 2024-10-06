@@ -52,3 +52,77 @@ function getSegments() {
     return billResult;
 }
 getSegments();
+
+
+
+const features = () => {
+    const showsFeatures = {
+        subsidiary: runtime.isFeatureInEffect({ feature: 'SUBSIDIARIES' }),
+        department: runtime.isFeatureInEffect({ feature: 'DEPARTMENTS' }),
+        location: runtime.isFeatureInEffect({ feature: 'LOCATIONS' }),
+        _class: runtime.isFeatureInEffect({ feature: 'CLASSES' })
+    }
+
+    const mandatoryFeatures = {
+        department: runtime.getCurrentUser().getPreference({ name: "DEPTMANDATORY" }),
+        location: runtime.getCurrentUser().getPreference({ name: "LOCMANDATORY" }),
+        _class: runtime.getCurrentUser().getPreference({ name: "CLASSMANDATORY" }),
+    }
+    console.log("showsFeatures",showsFeatures)
+
+    console.log("mandatoryFeatures",mandatoryFeatures)
+}
+
+
+
+features();
+
+
+function groupLines(jsonLines){
+    var departmentMandatory = nlapiGetContext().getPreference('DEPTMANDATORY');
+    var classMandatory = nlapiGetContext().getPreference('CLASSMANDATORY');
+    var locationMandatory = nlapiGetContext().getPreference('LOCMANDATORY');
+    var setupTaxSubsidiary = getSetupTaxSubsidiary();
+    var groupTaxcode = {};
+    for (var lineuniquekey in jsonLines) {
+        var item = jsonLines[lineuniquekey]
+        var key = item["taxcode"];
+        
+        if (!groupTaxcode[key]) {
+            groupTaxcode[key] = item;
+        }else{
+            groupTaxcode[key].debitamount += jsonLines[lineuniquekey]["debitamount"];
+        }
+    }
+    
+    var groupedLines = []
+    for (var key in groupTaxcode) {
+        if (departmentMandatory) {
+            if (setupTaxSubsidiary.department) {
+                groupTaxcode[key]["department"] = setupTaxSubsidiary.department;
+            }
+        }else{
+            groupTaxcode[key]["department"] = "";
+        }
+        if (classMandatory) {
+            if (setupTaxSubsidiary.class) {
+                groupTaxcode[key]["class"] = setupTaxSubsidiary.class;
+            }
+        }else{
+            groupTaxcode[key]["class"] = "";
+        }
+        if (locationMandatory) {
+            if (setupTaxSubsidiary.location) {
+                groupTaxcode[key]["location"] = setupTaxSubsidiary.location;
+            }
+        }else{
+            groupTaxcode[key]["location"] = "";
+        }
+        groupedLines.push(groupTaxcode[key]);
+    }
+
+    return groupedLines;
+}
+
+
+
