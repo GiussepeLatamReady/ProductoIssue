@@ -1,7 +1,21 @@
-{ type: "error.SuiteScriptError", name: "INVALID_FLD_VALUE", message: "You have entered an Invalid Field Value 318 for the following field: custbody_lmry_document_type", id: "", stack: [
-        "Error\n at RecordInvoker.setValue (suitescript/resources/javascript/record/serverRecordService.js:443:5)\n at NetSuiteObject.thenableFunction() (suitescript/resources/javascript/record/proxy.js:115:24)\n at Object.execute (/SuiteScripts/TEST_GADP_SCHDL_V2.1.js:41:40)"
-    ], cause: { type: "internal error", code: "INVALID_FLD_VALUE", details: "You have entered an Invalid Field Value 318 for the following field: custbody_lmry_document_type", userEvent: null, stackTrace: [
-            "Error\n at RecordInvoker.setValue (suitescript/resources/javascript/record/serverRecordService.js:443:5)\n at NetSuiteObject.thenableFunction() (suitescript/resources/javascript/record/proxy.js:115:24)\n at Object.execute (/SuiteScripts/TEST_GADP_SCHDL_V2.1.js:41:40)"
-        ], notifyOff: false
-    }, notifyOff: false, userFacing: true
-}
+{
+    type: "error.SuiteScriptError",
+    name: "USER_ERROR",
+    message: "Please enter value(s) for: Location",
+    id: "",
+    stack: [
+       "Error\n    at RecordInvoker.save (suitescript/resources/javascript/record/serverRecordService.js:371:13)\n    at NetSuiteObject.thenableFunction() (suitescript/resources/javascript/record/proxy.js:115:24)\n    at createJournalTransferIgv (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:266:38)\n    at transferIgv (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:286:5)\n    at Object.executeJournalIVA (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:85:7)\n    at Object.map (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/src/purchases/LMRY_PE_generate_JournalDetractions_MPRD_v2.0.js:124:24)"
+    ],
+    cause: {
+       type: "internal error",
+       code: "USER_ERROR",
+       details: "Please enter value(s) for: Location",
+       userEvent: null,
+       stackTrace: [
+          "Error\n    at RecordInvoker.save (suitescript/resources/javascript/record/serverRecordService.js:371:13)\n    at NetSuiteObject.thenableFunction() (suitescript/resources/javascript/record/proxy.js:115:24)\n    at createJournalTransferIgv (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:266:38)\n    at transferIgv (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:286:5)\n    at Object.executeJournalIVA (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:85:7)\n    at Object.map (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/src/purchases/LMRY_PE_generate_JournalDetractions_MPRD_v2.0.js:124:24)"
+       ],
+       notifyOff: false
+    },
+    notifyOff: false,
+    userFacing: true
+ }
