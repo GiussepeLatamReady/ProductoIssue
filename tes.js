@@ -1,128 +1,100 @@
-function getSegments() {
-    const billResult = [];
-    /*
-    const billSearch = search.load({
-        id:"customsearch_lmry_pe_traslado_iva"
-    });
-
-    billSearch.filters.push("AND",["internalid","anyof","200778"]);
-    */
-    const billSearch = search.create({
-        type: "vendorbill",
-        settings: [{ "name": "consolidationtype", "value": "NONE" }],
-        filters:
-            [
-                ["type", "anyof", "VendBill"],
-                "AND",
-                ["mainline", "is", "F"],
-                "AND",
-                ["taxline", "is", "T"],
-                "AND",
-                ["internalid", "anyof", "200779"]
-            ],
-        columns:
-            [
-                search.createColumn({ name: "account", label: "Account" }),
-                search.createColumn({ name: "creditfxamount", label: "Amount (Credit) (Foreign Currency)" }),
-                search.createColumn({ name: "debitfxamount", label: "Amount (Debit) (Foreign Currency)" }),
-                search.createColumn({ name: "entity", label: "Name" }),
-                search.createColumn({ name: "department", label: "Department" }),
-                search.createColumn({ name: "class", label: "Class" }),
-                search.createColumn({ name: "location", label: "Location" }),
-                search.createColumn({ name: "item", label: "Item" })
-            ]
-    });
-    billSearch.run().each(result => {
-        const {columns,getValue} = result;
-        console.log("result", result)
-        
-        billResult.push({
-            account:getValue(columns[0]),
-            creditAmount:getValue(columns[1]),
-            debitAmount:getValue(columns[2]),
-            entity:getValue(columns[3]),
-            department:getValue(columns[4]),
-            "class":getValue(columns[5]),
-            location:getValue(columns[6]),
-            Item:getValue(columns[7])
-        });
-        
-        return true;
-    });
-    return billResult;
-}
-getSegments();
-
-
-
-const features = () => {
-    const showsFeatures = {
-        subsidiary: runtime.isFeatureInEffect({ feature: 'SUBSIDIARIES' }),
-        department: runtime.isFeatureInEffect({ feature: 'DEPARTMENTS' }),
-        location: runtime.isFeatureInEffect({ feature: 'LOCATIONS' }),
-        _class: runtime.isFeatureInEffect({ feature: 'CLASSES' })
-    }
-
-    const mandatoryFeatures = {
-        department: runtime.getCurrentUser().getPreference({ name: "DEPTMANDATORY" }),
-        location: runtime.getCurrentUser().getPreference({ name: "LOCMANDATORY" }),
-        _class: runtime.getCurrentUser().getPreference({ name: "CLASSMANDATORY" }),
-    }
-    console.log("showsFeatures",showsFeatures)
-
-    console.log("mandatoryFeatures",mandatoryFeatures)
-}
-
-
-
-features();
-
-
-function groupLines(jsonLines){
-    var departmentMandatory = nlapiGetContext().getPreference('DEPTMANDATORY');
-    var classMandatory = nlapiGetContext().getPreference('CLASSMANDATORY');
-    var locationMandatory = nlapiGetContext().getPreference('LOCMANDATORY');
-    var setupTaxSubsidiary = getSetupTaxSubsidiary();
-    var groupTaxcode = {};
+function orderLines(jsonLines) {
+    var sortedKeys = [];
     for (var lineuniquekey in jsonLines) {
-        var item = jsonLines[lineuniquekey]
-        var key = item["taxcode"];
-        
+        if (jsonLines.hasOwnProperty(lineuniquekey)) {
+            sortedKeys.push(lineuniquekey);
+        }
+    }
+
+    // Ordenar las claves por 'lineuniquekey' ascendente y dar prioridad a 'item' sobre 'expense'
+    sortedKeys.sort(function (a, b) {
+        var lineA = jsonLines[a];
+        var lineB = jsonLines[b];
+    
+        // Comparar por sublista primero (priorizar 'item' sobre 'expense')
+        if (lineA.sublist !== lineB.sublist) {
+            return lineA.sublist === 'item' ? -1 : 1;
+        }
+    
+        // Si las sublistas son iguales, comparar por 'lineuniquekey' ascendente
+        var lineUniquekeyA = parseInt(lineA.lineuniquekey, 10);
+        var lineUniquekeyB = parseInt(lineB.lineuniquekey, 10);
+    
+        return lineUniquekeyA - lineUniquekeyB;
+    });
+    
+    
+    
+    console.log("sortedKeys :",sortedKeys)
+    var groupTaxcode = {};
+
+    // Agrupar usando el arreglo de claves ordenadas
+    for (var i = 0; i < sortedKeys.length; i++) {
+        var lineuniquekey = sortedKeys[i];
+        var item = jsonLines[lineuniquekey];
+        var key = item.taxcode;
+
         if (!groupTaxcode[key]) {
             groupTaxcode[key] = item;
-        }else{
-            groupTaxcode[key].debitamount += jsonLines[lineuniquekey]["debitamount"];
+        } else {
+            groupTaxcode[key].debitamount += item.debitamount;
         }
     }
-    
-    var groupedLines = []
-    for (var key in groupTaxcode) {
-        if (departmentMandatory) {
-            if (setupTaxSubsidiary.department) {
-                groupTaxcode[key]["department"] = setupTaxSubsidiary.department;
-            }
-        }else{
-            groupTaxcode[key]["department"] = "";
-        }
-        if (classMandatory) {
-            if (setupTaxSubsidiary.class) {
-                groupTaxcode[key]["class"] = setupTaxSubsidiary.class;
-            }
-        }else{
-            groupTaxcode[key]["class"] = "";
-        }
-        if (locationMandatory) {
-            if (setupTaxSubsidiary.location) {
-                groupTaxcode[key]["location"] = setupTaxSubsidiary.location;
-            }
-        }else{
-            groupTaxcode[key]["location"] = "";
-        }
-        groupedLines.push(groupTaxcode[key]);
-    }
-
-    return groupedLines;
+    return groupTaxcode;
 }
 
+var jsonLines = {
+    "1": {
+        "department": "Finance",
+        "location": "New York",
+        "class": "C",
+        "taxcode": "TX001",
+        "debitamount": 25,
+        "item": "2001",
+        "sublist": "expense",
+        "lineuniquekey": "1"
+    },
+    "2": {
+        "department": "HR",
+        "location": "Boston",
+        "class": "D",
+        "taxcode": "TX002",
+        "debitamount": 30,
+        "item": "2002",
+        "sublist": "expense",
+        "lineuniquekey": "2"
+    },
+    "3": {
+        "department": "Sales",
+        "location": "New York",
+        "class": "",
+        "taxcode": "TX001",
+        "debitamount": 50,
+        "item": "1001",
+        "sublist": "item",
+        "lineuniquekey": "3"
+    },
+    "4": {
+        "department": "Sales",
+        "location": "Los Angeles",
+        "class": "B",
+        "taxcode": "TX001",
+        "debitamount": 75,
+        "item": "1002",
+        "sublist": "item",
+        "lineuniquekey": "4"
+    },
+    "5": {
+        "department": "Marketing",
+        "location": "San Francisco",
+        "class": "A",
+        "taxcode": "TX002",
+        "debitamount": 100,
+        "item": "1003",
+        "sublist": "item",
+        "lineuniquekey": "5"
+    }
+};
 
 
+console.log(orderLines(jsonLines));

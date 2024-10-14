@@ -106,7 +106,32 @@ define([
           class: _class,
           taxcode,
           debitamount: Number(taxamount),
-          item: iditem
+          item: iditem,
+          lineuniquekey:lineuniquekey,
+          sublist:"item"
+        };
+      }
+    }
+
+    const itemsExpense = recordLoad.getLineCount({ sublistId: 'expense' });
+
+    for (let i = 0; i < itemsExpense; i++) {
+      const lineuniquekey = recordLoad.getSublistValue({ sublistId: 'expense', fieldId: "lineuniquekey", line: i });
+
+      if (!jsonLines[lineuniquekey]) {
+        const [iditem, department, location, _class, taxcode, taxamount] = [
+          "account", "department", "location", "class", "taxcode", "tax1amt"
+        ].map(fieldId => recordLoad.getSublistValue({ sublistId: 'expense', fieldId, line: i }));
+
+        jsonLines[lineuniquekey] = {
+          department,
+          location,
+          class: _class,
+          taxcode,
+          debitamount: Number(taxamount),
+          item: iditem,
+          lineuniquekey:lineuniquekey,
+          sublist:"expense"
         };
       }
     }
@@ -119,18 +144,7 @@ define([
     let classMandatory = runtime.getCurrentUser().getPreference({ name: "CLASSMANDATORY" });
     let locationMandatory = runtime.getCurrentUser().getPreference({ name: "LOCMANDATORY" });
 
-    let groupTaxcode = {};
-
-    // Agrupar las líneas por código de impuestos
-    for (let lineuniquekey in jsonLines) {
-      let item = jsonLines[lineuniquekey];
-      let key = item.taxcode;
-      if (!groupTaxcode[key]) {
-        groupTaxcode[key] = item;
-      } else {
-        groupTaxcode[key].debitamount += item.debitamount;
-      }
-    }
+    let groupTaxcode = orderLines(jsonLines);
 
     // Asignar valores de departamento, clase y ubicación
     let groupedLines = [];
@@ -162,6 +176,47 @@ define([
     return groupedLines;
   }
 
+  const orderLines = (jsonLines) => {
+    let sortedKeys = [];
+    for (let lineuniquekey in jsonLines) {
+      if (jsonLines.hasOwnProperty(lineuniquekey)) {
+        sortedKeys.push(lineuniquekey);
+      }
+    }
+
+    // Ordenar las claves por 'lineuniquekey' ascendente y dar prioridad a 'item' sobre 'expense'
+    sortedKeys.sort(function (a, b) {
+      let lineA = jsonLines[a];
+      let lineB = jsonLines[b];
+
+      // Comparar por sublista primero (priorizar 'item' sobre 'expense')
+      if (lineA.sublist !== lineB.sublist) {
+        return lineA.sublist === 'item' ? -1 : 1;
+      }
+
+      // Si las sublistas son iguales, comparar por 'lineuniquekey' ascendente
+      let lineUniquekeyA = parseInt(lineA.lineuniquekey, 10);
+      let lineUniquekeyB = parseInt(lineB.lineuniquekey, 10);
+
+      return lineUniquekeyA - lineUniquekeyB;
+    });
+
+    let groupTaxcode = {};
+
+    // Agrupar usando el arreglo de claves ordenadas
+    for (let i = 0; i < sortedKeys.length; i++) {
+      let lineuniquekey = sortedKeys[i];
+      let item = jsonLines[lineuniquekey];
+      let key = item.taxcode;
+
+      if (!groupTaxcode[key]) {
+        groupTaxcode[key] = item;
+      } else {
+        groupTaxcode[key].debitamount += item.debitamount;
+      }
+    }
+    return groupTaxcode;
+  }
 
   const joinDetailsLines = (groupedLines, billID) => {
     const taxlineDetail = {};
@@ -275,59 +330,53 @@ define([
 
       if (linejournal !== 0) {
 
-
         const idJournal = newJournal.save({
           enableSourcing: true,
           ignoreMandatoryFields: true,
           dissableTriggers: true
         });
-        log.error("idJournal create",idJournal)
       }
     }
   };
 
   const transferIgv = (subsidiary, billID, detractionDate) => {
     const setupTaxSubsidiary = getSetupTaxSubsidiary(subsidiary);
-    log.error("setupTaxSubsidiary",setupTaxSubsidiary)
     const accountIva = setupTaxSubsidiary?.accountIva;
 
     if (!accountIva) return false;
 
     const transactionLines = getLines(billID);
-    log.error("transactionLines",transactionLines)
     let groupedLines = groupLines(transactionLines, setupTaxSubsidiary);
-    log.error("groupedLines",groupedLines)
     groupedLines = joinDetailsLines(groupedLines, billID);
-    log.error("joinDetailsLines",groupedLines)
     createJournalTransferIgv(groupedLines, subsidiary, detractionDate, billID, accountIva);
   };
 
   const getSetupTaxSubsidiary = (subsidiary) => {
     let setupTaxSubsidiary = {};
     let setuptaxSearch = search.create({
-        type: "customrecord_lmry_setup_tax_subsidiary",
-        filters: [
-            ["custrecord_lmry_setuptax_subsidiary", "is", subsidiary],
-            "AND",
-            ["isinactive", "is", "F"]
-        ],
-        columns: [
-            'custrecord_lmry_setuptax_department',
-            'custrecord_lmry_setuptax_class',
-            'custrecord_lmry_setuptax_location',
-            'custrecord_lmry_setuptax_pe_vat_account',
-        ]
+      type: "customrecord_lmry_setup_tax_subsidiary",
+      filters: [
+        ["custrecord_lmry_setuptax_subsidiary", "is", subsidiary],
+        "AND",
+        ["isinactive", "is", "F"]
+      ],
+      columns: [
+        'custrecord_lmry_setuptax_department',
+        'custrecord_lmry_setuptax_class',
+        'custrecord_lmry_setuptax_location',
+        'custrecord_lmry_setuptax_pe_vat_account',
+      ]
     });
     let resultSetupTax = setuptaxSearch.run().getRange(0, 1000);
 
     if (resultSetupTax && resultSetupTax.length) {
-        setupTaxSubsidiary["department"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_department');
-        setupTaxSubsidiary["class"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_class');
-        setupTaxSubsidiary["location"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_location');
-        setupTaxSubsidiary["accountIva"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_pe_vat_account');
+      setupTaxSubsidiary["department"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_department');
+      setupTaxSubsidiary["class"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_class');
+      setupTaxSubsidiary["location"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_location');
+      setupTaxSubsidiary["accountIva"] = resultSetupTax[0].getValue('custrecord_lmry_setuptax_pe_vat_account');
     }
     return setupTaxSubsidiary;
-}
+  }
 
   return {
     executeJournalIVA,

@@ -181,7 +181,34 @@ define(['N/log', 'N/record', 'N/search', 'N/format', 'N/runtime', 'N/url', 'N/em
                         "class": _class,
                         "taxcode": taxcode,
                         "debitamount": taxamount,
-                        "item": iditem
+                        "item": iditem,
+                        "lineuniquekey":lineuniquekey,
+                        "sublist":"item"
+                    }
+                }
+            }
+
+            var itemsExpense = recordLoad.getLineCount({ sublistId: 'expense' });
+            for (var i = 0; i < itemsExpense; i++) {
+                var iditem = recordLoad.getSublistValue({ sublistId: 'expense', fieldId: "account", line: i });
+                var department = recordLoad.getSublistValue({ sublistId: 'expense', fieldId: "department", line: i });
+                var location = recordLoad.getSublistValue({ sublistId: 'expense', fieldId: "location", line: i });
+                var _class = recordLoad.getSublistValue({ sublistId: 'expense', fieldId: "class", line: i });
+                var taxcode = recordLoad.getSublistValue({ sublistId: 'expense', fieldId: "taxcode", line: i });
+                var lineuniquekey = recordLoad.getSublistValue({ sublistId: 'expense', fieldId: "lineuniquekey", line: i });
+
+                var taxamount = Number(recordLoad.getSublistValue({ sublistId: 'expense', fieldId: "tax1amt", line: i }));
+
+                if (!jsonLines[lineuniquekey]) {
+                    jsonLines[lineuniquekey] = {
+                        "department": department,
+                        "location": location,
+                        "class": _class,
+                        "taxcode": taxcode,
+                        "debitamount": taxamount,
+                        "item": iditem,
+                        "lineuniquekey":lineuniquekey,
+                        "sublist":"expense"
                     }
                 }
             }
@@ -201,18 +228,7 @@ define(['N/log', 'N/record', 'N/search', 'N/format', 'N/runtime', 'N/url', 'N/em
             var classMandatory = runtime.getCurrentUser().getPreference({ name: "CLASSMANDATORY" });
             var locationMandatory = runtime.getCurrentUser().getPreference({ name: "LOCMANDATORY" });
         
-            var groupTaxcode = {};
-        
-            // Agrupar las líneas por código de impuestos
-            for (var lineuniquekey in jsonLines) {
-                var item = jsonLines[lineuniquekey];
-                var key = item.taxcode;
-                if (!groupTaxcode[key]) {
-                    groupTaxcode[key] = item;
-                } else {
-                    groupTaxcode[key].debitamount += item.debitamount;
-                }
-            }
+            var groupTaxcode = orderLines(jsonLines);
         
             // Asignar valores de departamento, clase y ubicación
             var groupedLines = [];
@@ -242,6 +258,49 @@ define(['N/log', 'N/record', 'N/search', 'N/format', 'N/runtime', 'N/url', 'N/em
             }
         
             return groupedLines;
+        }
+
+        function orderLines(jsonLines) {
+            var sortedKeys = [];
+            for (var lineuniquekey in jsonLines) {
+                if (jsonLines.hasOwnProperty(lineuniquekey)) {
+                    sortedKeys.push(lineuniquekey);
+                }
+            }
+        
+            // Ordenar las claves por 'lineuniquekey' ascendente y dar prioridad a 'item' sobre 'expense'
+            sortedKeys.sort(function (a, b) {
+                var lineA = jsonLines[a];
+                var lineB = jsonLines[b];
+            
+                // Comparar por sublista primero (priorizar 'item' sobre 'expense')
+                if (lineA.sublist !== lineB.sublist) {
+                    return lineA.sublist === 'item' ? -1 : 1;
+                }
+            
+                // Si las sublistas son iguales, comparar por 'lineuniquekey' ascendente
+                var lineUniquekeyA = parseInt(lineA.lineuniquekey, 10);
+                var lineUniquekeyB = parseInt(lineB.lineuniquekey, 10);
+            
+                return lineUniquekeyA - lineUniquekeyB;
+            });
+            
+            
+            var groupTaxcode = {};
+        
+            // Agrupar usando el arreglo de claves ordenadas
+            for (var i = 0; i < sortedKeys.length; i++) {
+                var lineuniquekey = sortedKeys[i];
+                var item = jsonLines[lineuniquekey];
+                var key = item.taxcode;
+        
+                if (!groupTaxcode[key]) {
+                    groupTaxcode[key] = item;
+                } else {
+                    groupTaxcode[key].debitamount += item.debitamount;
+                }
+            }
+            return groupTaxcode;
         }
 
         /**

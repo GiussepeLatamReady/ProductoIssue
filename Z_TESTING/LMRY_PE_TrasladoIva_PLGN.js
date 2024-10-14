@@ -85,10 +85,12 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
 
         //Items caso            
         var jsonLines = getLines(transactionRecord);
+        nlapiLogExecution('ERROR', 'jsonLines', JSON.stringify(jsonLines));
         var groupedLines = groupLines(jsonLines);
-        
+        nlapiLogExecution('ERROR', 'groupedLines', JSON.stringify(groupedLines));
         //Json con los Datos del GL Impact
         var JsonData = joinDetailsLines(groupedLines);
+        nlapiLogExecution('ERROR', 'JsonData', JSON.stringify(JsonData));
         //Obtiene el Global Account Mapping
         if (featuremultibook) {
             obtainsAccounts(book.getId());
@@ -123,13 +125,19 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
             newLine1.setAccountId(parseInt(accountTC));
             newLine1.setCreditAmount(amountIVA);
             newLine1.setMemo('Traslado de IVA');
+            nlapiLogExecution('ERROR', 'depTC', depTC);
+            nlapiLogExecution('ERROR', 'claTC', claTC);
+            nlapiLogExecution('ERROR', 'locTC', locTC);
             if (depTC) {
+                nlapiLogExecution('ERROR', 'depTC 111', depTC);
                 newLine1.setDepartmentId(parseInt(depTC));
             }
             if (claTC) {
+                nlapiLogExecution('ERROR', 'claTC 222', claTC);
                 newLine1.setClassId(parseInt(claTC));
             }
             if (locTC) {
+                nlapiLogExecution('ERROR', 'locTC 222', locTC);
                 newLine1.setLocationId(parseInt(locTC));
             }
             /*if (entity) {
@@ -142,12 +150,15 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
             newLine2.setDebitAmount(amountIVA);
             newLine2.setMemo('Traslado de IVA');
             if (depTC) {
+                nlapiLogExecution('ERROR', 'depTC 333', depTC);
                 newLine2.setDepartmentId(parseInt(depTC));
             }
             if (claTC) {
+                nlapiLogExecution('ERROR', 'claTC 333', claTC);
                 newLine2.setClassId(parseInt(claTC));
             }
             if (locTC) {
+                nlapiLogExecution('ERROR', 'locTC 333', locTC);
                 newLine2.setLocationId(parseInt(locTC));
             }
             /*if (entity) {
@@ -165,18 +176,10 @@ function groupLines(jsonLines) {
     var classMandatory = context.getPreference('CLASSMANDATORY');
     var locationMandatory = context.getPreference('LOCMANDATORY');
 
-    var groupTaxcode = {};
-
-    // Agrupar las líneas por código de impuestos
-    for (var lineuniquekey in jsonLines) {
-        var item = jsonLines[lineuniquekey];
-        var key = item.taxcode;
-        if (!groupTaxcode[key]) {
-            groupTaxcode[key] = item;
-        } else {
-            groupTaxcode[key].debitamount += item.debitamount;
-        }
-    }
+    nlapiLogExecution('ERROR', 'departmentMandatory', departmentMandatory);
+    nlapiLogExecution('ERROR', 'classMandatory', classMandatory);
+    nlapiLogExecution('ERROR', 'locationMandatory', locationMandatory);
+    var groupTaxcode = orderLines(jsonLines);
 
     // Asignar valores de departamento, clase y ubicación
     var groupedLines = [];
@@ -254,11 +257,81 @@ function getLines(transactionRecord) {
                 "class": _class,
                 "taxcode": taxcode,
                 "debitamount": taxamount,
-                "item": iditem
+                "item": iditem,
+                "sublist":"item",
+                "lineuniquekey":lineuniquekey
             }
         }
     }
+
+    var linesExoense = transactionRecord.getLineItemCount('expense');
+    for (var i = 0; i < linesExoense; i++) {
+
+        var iditem = transactionRecord.getLineItemValue('expense', 'account', i + 1);
+        var department = transactionRecord.getLineItemValue('expense', 'department', i + 1);
+        var location = transactionRecord.getLineItemValue('expense', 'location', i + 1);
+        var _class = transactionRecord.getLineItemValue('expense', 'class', i + 1);
+        var taxcode = transactionRecord.getLineItemValue('expense', 'taxcode', i + 1);
+        var lineuniquekey = transactionRecord.getLineItemValue('expense', 'lineuniquekey', i + 1);
+
+        var taxamount = Number(transactionRecord.getLineItemValue('expense', 'tax1amt', i + 1));
+        if (!jsonLines[lineuniquekey]) {
+            jsonLines[lineuniquekey] = {
+                "department": department,
+                "location": location,
+                "class": _class,
+                "taxcode": taxcode,
+                "debitamount": taxamount,
+                "item": iditem,
+                "sublist":"expense",
+                "lineuniquekey":lineuniquekey
+            }
+        }
+    }
+
     return jsonLines;
+}
+
+function orderLines(jsonLines) {
+    var sortedKeys = [];
+    for (var lineuniquekey in jsonLines) {
+        if (jsonLines.hasOwnProperty(lineuniquekey)) {
+            sortedKeys.push(lineuniquekey);
+        }
+    }
+
+    // Ordenar las claves por 'lineuniquekey' ascendente y dar prioridad a 'item' sobre 'expense'
+    sortedKeys.sort(function (a, b) {
+        var lineA = jsonLines[a];
+        var lineB = jsonLines[b];
+    
+        // Comparar por sublista primero (priorizar 'item' sobre 'expense')
+        if (lineA.sublist !== lineB.sublist) {
+            return lineA.sublist === 'item' ? -1 : 1;
+        }
+    
+        // Si las sublistas son iguales, comparar por 'lineuniquekey' ascendente
+        var lineUniquekeyA = parseInt(lineA.lineuniquekey, 10);
+        var lineUniquekeyB = parseInt(lineB.lineuniquekey, 10);
+    
+        return lineUniquekeyA - lineUniquekeyB;
+    });
+    
+    var groupTaxcode = {};
+
+    // Agrupar usando el arreglo de claves ordenadas
+    for (var i = 0; i < sortedKeys.length; i++) {
+        var lineuniquekey = sortedKeys[i];
+        var item = jsonLines[lineuniquekey];
+        var key = item.taxcode;
+
+        if (!groupTaxcode[key]) {
+            groupTaxcode[key] = item;
+        } else {
+            groupTaxcode[key].debitamount += item.debitamount;
+        }
+    }
+    return groupTaxcode;
 }
 
 function joinDetailsLines(groupedLines) {
@@ -347,7 +420,7 @@ function obtainsAccounts(currentBook) {
 
 function getAccount(cuentaSource, dep, cla, loc) {
     try {
-        for (line in Json_GMA) {
+        for (var line in Json_GMA) {
             if (line == cuentaSource) {
                 if (Json_GMA[line].department != 0 && Json_GMA[line].department != null && Json_GMA[line].department != '' && Json_GMA[line].department != undefined) {
                     if (Json_GMA[line].department != dep) {
