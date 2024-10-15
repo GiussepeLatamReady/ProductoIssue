@@ -268,17 +268,15 @@ define(['N/log', 'N/record', 'N/search', 'N/format', 'N/runtime', 'N/url', 'N/em
                 }
             }
         
-            // Ordenar las claves por 'lineuniquekey' ascendente y dar prioridad a 'item' sobre 'expense'
+            
             sortedKeys.sort(function (a, b) {
                 var lineA = jsonLines[a];
                 var lineB = jsonLines[b];
             
-                // Comparar por sublista primero (priorizar 'item' sobre 'expense')
                 if (lineA.sublist !== lineB.sublist) {
                     return lineA.sublist === 'item' ? -1 : 1;
                 }
             
-                // Si las sublistas son iguales, comparar por 'lineuniquekey' ascendente
                 var lineUniquekeyA = parseInt(lineA.lineuniquekey, 10);
                 var lineUniquekeyB = parseInt(lineB.lineuniquekey, 10);
             
@@ -324,13 +322,13 @@ define(['N/log', 'N/record', 'N/search', 'N/format', 'N/runtime', 'N/url', 'N/em
                     ["taxline", "is", "T"]
                 ],
                 columns: [
-                            'internalid', 
-                            'account',
-                            'currency', 
-                            'exchangerate', 
-                            'custbody_lmry_concepto_detraccion',
-                            'item'
-                        ]
+                    'internalid', 
+                    'account',
+                    'currency', 
+                    'exchangerate', 
+                    'custbody_lmry_concepto_detraccion',
+                    'item'
+                ]
             });
             var resultTaxline = billSearchObj.run().getRange(0, 1000);
 
@@ -456,12 +454,12 @@ define(['N/log', 'N/record', 'N/search', 'N/format', 'N/runtime', 'N/url', 'N/em
             var groupedLines = groupLines(transactionLines,setupTaxSubsidiary);
             groupedLines =  joinDetailsLines(groupedLines,billID);
             createJournalTransferIgv(
-                                        groupedLines,
-                                        subsidiary,
-                                        detractionDate,
-                                        billID,
-                                        accountIva
-                                    );
+                groupedLines,
+                subsidiary,
+                detractionDate,
+                billID,
+                accountIva
+            );
         }
 
 

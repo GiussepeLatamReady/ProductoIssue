@@ -125,19 +125,13 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
             newLine1.setAccountId(parseInt(accountTC));
             newLine1.setCreditAmount(amountIVA);
             newLine1.setMemo('Traslado de IVA');
-            nlapiLogExecution('ERROR', 'depTC', depTC);
-            nlapiLogExecution('ERROR', 'claTC', claTC);
-            nlapiLogExecution('ERROR', 'locTC', locTC);
             if (depTC) {
-                nlapiLogExecution('ERROR', 'depTC 111', depTC);
                 newLine1.setDepartmentId(parseInt(depTC));
             }
             if (claTC) {
-                nlapiLogExecution('ERROR', 'claTC 222', claTC);
                 newLine1.setClassId(parseInt(claTC));
             }
             if (locTC) {
-                nlapiLogExecution('ERROR', 'locTC 222', locTC);
                 newLine1.setLocationId(parseInt(locTC));
             }
             /*if (entity) {
@@ -150,15 +144,12 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book) 
             newLine2.setDebitAmount(amountIVA);
             newLine2.setMemo('Traslado de IVA');
             if (depTC) {
-                nlapiLogExecution('ERROR', 'depTC 333', depTC);
                 newLine2.setDepartmentId(parseInt(depTC));
             }
             if (claTC) {
-                nlapiLogExecution('ERROR', 'claTC 333', claTC);
                 newLine2.setClassId(parseInt(claTC));
             }
             if (locTC) {
-                nlapiLogExecution('ERROR', 'locTC 333', locTC);
                 newLine2.setLocationId(parseInt(locTC));
             }
             /*if (entity) {
@@ -175,12 +166,10 @@ function groupLines(jsonLines) {
     var departmentMandatory = context.getPreference('DEPTMANDATORY');
     var classMandatory = context.getPreference('CLASSMANDATORY');
     var locationMandatory = context.getPreference('LOCMANDATORY');
-
+    var groupTaxcode = orderLines(jsonLines);
     nlapiLogExecution('ERROR', 'departmentMandatory', departmentMandatory);
     nlapiLogExecution('ERROR', 'classMandatory', classMandatory);
     nlapiLogExecution('ERROR', 'locationMandatory', locationMandatory);
-    var groupTaxcode = orderLines(jsonLines);
-
     // Asignar valores de departamento, clase y ubicación
     var groupedLines = [];
     for (var key in groupTaxcode) {
@@ -214,7 +203,6 @@ function groupLines(jsonLines) {
 
 
 function getSetupTaxSubsidiary() {
-    
     var filters = [];
     filters[0] = new nlobjSearchFilter('isinactive', null, 'is', 'F');
     if (featuresubs == 'T' || featuresubs == true) {
@@ -224,8 +212,7 @@ function getSetupTaxSubsidiary() {
     columns[0] = new nlobjSearchColumn('custrecord_lmry_setuptax_department');
     columns[1] = new nlobjSearchColumn('custrecord_lmry_setuptax_class');
     columns[2] = new nlobjSearchColumn('custrecord_lmry_setuptax_location');
-    columns[3] = new nlobjSearchColumn('custrecord_lmry_setuptax_pe_vat_account');
-    
+    columns[3] = new nlobjSearchColumn('custrecord_lmry_setuptax_pe_vat_account'); 
     var searchSetupTax = nlapiCreateSearch("customrecord_lmry_setup_tax_subsidiary", filters, columns);
     var resultSetupTax = searchSetupTax.runSearch().getResults(0, 1);
 
@@ -300,23 +287,20 @@ function orderLines(jsonLines) {
         }
     }
 
-    // Ordenar las claves por 'lineuniquekey' ascendente y dar prioridad a 'item' sobre 'expense'
+    nlapiLogExecution('ERROR', 'sortedKeys 1', JSON.stringify(sortedKeys));
     sortedKeys.sort(function (a, b) {
         var lineA = jsonLines[a];
         var lineB = jsonLines[b];
     
-        // Comparar por sublista primero (priorizar 'item' sobre 'expense')
         if (lineA.sublist !== lineB.sublist) {
             return lineA.sublist === 'item' ? -1 : 1;
         }
-    
-        // Si las sublistas son iguales, comparar por 'lineuniquekey' ascendente
         var lineUniquekeyA = parseInt(lineA.lineuniquekey, 10);
         var lineUniquekeyB = parseInt(lineB.lineuniquekey, 10);
     
         return lineUniquekeyA - lineUniquekeyB;
     });
-    
+    nlapiLogExecution('ERROR', 'sortedKeys 2', JSON.stringify(sortedKeys));
     var groupTaxcode = {};
 
     // Agrupar usando el arreglo de claves ordenadas

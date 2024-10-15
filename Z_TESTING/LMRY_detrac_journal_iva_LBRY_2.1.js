@@ -184,17 +184,17 @@ define([
       }
     }
 
-    // Ordenar las claves por 'lineuniquekey' ascendente y dar prioridad a 'item' sobre 'expense'
+    
     sortedKeys.sort(function (a, b) {
       let lineA = jsonLines[a];
       let lineB = jsonLines[b];
 
-      // Comparar por sublista primero (priorizar 'item' sobre 'expense')
+      
       if (lineA.sublist !== lineB.sublist) {
         return lineA.sublist === 'item' ? -1 : 1;
       }
 
-      // Si las sublistas son iguales, comparar por 'lineuniquekey' ascendente
+      
       let lineUniquekeyA = parseInt(lineA.lineuniquekey, 10);
       let lineUniquekeyB = parseInt(lineB.lineuniquekey, 10);
 
