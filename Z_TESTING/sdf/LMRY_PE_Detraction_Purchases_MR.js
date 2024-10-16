@@ -763,7 +763,9 @@ define(['N/format', 'N/log', 'N/record', 'N/search', 'N/runtime', 'SuiteApps/com
                         class: _class,
                         taxcode,
                         debitamount: Number(taxamount),
-                        item: iditem
+                        item: iditem,
+                        sublist:"item",
+                        lineuniquekey:lineuniquekey
                     };
                 }
             }
@@ -784,7 +786,9 @@ define(['N/format', 'N/log', 'N/record', 'N/search', 'N/runtime', 'SuiteApps/com
                         class: _class,
                         taxcode,
                         debitamount: Number(taxamount),
-                        item: iditem
+                        item: iditem,
+                        sublist:"expense",
+                        lineuniquekey:lineuniquekey
                     };
                 }
             }
@@ -796,9 +800,7 @@ define(['N/format', 'N/log', 'N/record', 'N/search', 'N/runtime', 'SuiteApps/com
             let departmentMandatory = runtime.getCurrentUser().getPreference({ name: "DEPTMANDATORY" });
             let classMandatory = runtime.getCurrentUser().getPreference({ name: "CLASSMANDATORY" });
             let locationMandatory = runtime.getCurrentUser().getPreference({ name: "LOCMANDATORY" });
-
             let groupTaxcode = orderLines(jsonLines);
-
             // Asignar valores de departamento, clase y ubicación
             let groupedLines = [];
             for (let key in groupTaxcode) {
@@ -837,7 +839,6 @@ define(['N/format', 'N/log', 'N/record', 'N/search', 'N/runtime', 'SuiteApps/com
                     sortedKeys.push(lineuniquekey);
                 }
             }
-
             // Ordenar las claves por 'lineuniquekey' ascendente y dar prioridad a 'item' sobre 'expense'
             sortedKeys.sort(function (a, b) {
                 let lineA = jsonLines[a];
@@ -854,7 +855,6 @@ define(['N/format', 'N/log', 'N/record', 'N/search', 'N/runtime', 'SuiteApps/com
 
                 return lineUniquekeyA - lineUniquekeyB;
             });
-
             let groupTaxcode = {};
 
             // Agrupar usando el arreglo de claves ordenadas
