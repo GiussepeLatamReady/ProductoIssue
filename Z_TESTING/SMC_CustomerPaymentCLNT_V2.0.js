@@ -137,7 +137,6 @@ define(['N/log', 'N/search', 'N/runtime', 'N/email', 'N/format', 'N/url', 'N/htt
 
         // Valida el Acceso
         if (subsi_OW == true || subsi_OW == 'T') {
-          console.log()
           ValidAccessCPU(recordObj.getValue({
             fieldId: 'subsidiary'
           }), licenses);
@@ -153,6 +152,16 @@ define(['N/log', 'N/search', 'N/runtime', 'N/email', 'N/format', 'N/url', 'N/htt
         console.log("custbody_lmry_subsidiary_country",JSON.stringify(recordObj.getField({
           fieldId: 'custbody_lmry_subsidiary_country'
         })))
+
+        log.error("field",recordObj.getField({
+          fieldId: 'custbody_lmry_subsidiary_country'
+        }))
+        log.error("customform f",recordObj.getField({
+          fieldId: 'customform'
+        }))
+        log.error("customform v",recordObj.getValue({
+          fieldId: 'customform'
+        }))
         if (LMRY_countr[0] == 'MX') {
           if (type == 'create' || type == 'copy' || type == 'edit') {
             var fieldIVA = recordObj.getField({
