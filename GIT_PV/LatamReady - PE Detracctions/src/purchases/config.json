@@ -1,0 +1,12 @@
+{
+  "paths": {
+    "detraction/serverWidget": "../../lib/LMRY_detrac_ServerWidget_LBRY_v2.0.js",
+    "detraction/metadata": "../../lib/LMRY_detrac_metadata_LBRY_v2.0.js",
+    "detraction/loader": "../../lib/LMRY_detrac_loader_LBRY_v2.0.js",
+    "detraction/batch": "../../lib/LMRY_detrac_batch_object_LBRY_v2.0.js",
+    "detraction/batchFlow": "../../lib/LMRY_detrac_batchFlow_LBRY_v2.0.js",
+    "detraction/freemarker": "../../lib/LMRY_detrac_freemarker_LBRY_v2.0.js",
+    "LR/popup": "../../lib/LMRY_detrac_popup_LBRY_v2.0.js",
+    "detraction/journalIVA": "../../lib/LMRY_detrac_journal_iva_LBRY_2.1.js"
+  }
+}
