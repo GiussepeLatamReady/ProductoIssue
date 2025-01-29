@@ -205,17 +205,21 @@ define([
 
 
           var accounts = loader.getAccounts(_PARAMS["custfilter_subsi"]);
-
+          log.error("accounts", accounts);
           var isError = false;
           var total = 0;
           for (var x in accounts) {
+            log.error("accounts[x]", accounts[x]);
+            log.error("x", x);
             total++;
-            if (!accounts[x]) {
+            if (!accounts[x] && x != "custpage_acc_5") {
               isError = true;
 
             }
           }
-          log.error(total, isError);
+          log.error("total", total);
+          log.error("isError", isError);
+          //log.error(total, isError);
           if (total != 0 && !isError) {
 
             customWidget.activeSubmit();
