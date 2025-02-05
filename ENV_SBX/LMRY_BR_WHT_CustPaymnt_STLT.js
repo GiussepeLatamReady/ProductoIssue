@@ -21,7 +21,7 @@ define(['N/log', 'N/ui/serverWidget', 'N/search', 'N/runtime', 'N/error', 'N/red
         var DEPLOY_ID = 'customdeploy_lmry_br_custpayments_stlt';
         var SCRIPT_ID_LOG = 'customscript_lmry_br_custpaymt_log_stlt';
         var DEPLOY_ID_LOG = 'customdeploy_lmry_br_custpaymt_log_stlt';
-        var MR_SCRIPT_ID = 'customscript_lmry_br_custpayments_mprd';
+        var MR_SCRIPT_ID = 'c:\Users\Giussepe\Downloads\LMRY_BR_WHT_CustPaymnt_MPRD.js';
         var MR_DEPLOYMENT_ID = 'customdeploy_lmry_br_custpayments_mprd';
         var EXPORT_WHT_MR_SCRIPT_ID = "customscript_lmry_br_exportwht_mprd";
         var EXPORT_WHT_MR_DEPLOY_ID = "customdeploy_lmry_br_exportwht_mprd";
