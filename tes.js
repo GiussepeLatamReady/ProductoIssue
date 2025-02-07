@@ -1,100 +1,12 @@
-function orderLines(jsonLines) {
-    var sortedKeys = [];
-    for (var lineuniquekey in jsonLines) {
-        if (jsonLines.hasOwnProperty(lineuniquekey)) {
-            sortedKeys.push(lineuniquekey);
-        }
+const splitTransaction = (text) => {
+    const listTemp = text.split(" ");
+    const listTransaction = [];
+    for (let i = 0; i < listTemp.length; i=i+2) {
+        const transaction = listTemp[i]+" "+listTemp[i+1];
+        listTransaction.push(transaction);
     }
-
-    // Ordenar las claves por 'lineuniquekey' ascendente y dar prioridad a 'item' sobre 'expense'
-    sortedKeys.sort(function (a, b) {
-        var lineA = jsonLines[a];
-        var lineB = jsonLines[b];
-    
-        // Comparar por sublista primero (priorizar 'item' sobre 'expense')
-        if (lineA.sublist !== lineB.sublist) {
-            return lineA.sublist === 'item' ? -1 : 1;
-        }
-    
-        // Si las sublistas son iguales, comparar por 'lineuniquekey' ascendente
-        var lineUniquekeyA = parseInt(lineA.lineuniquekey, 10);
-        var lineUniquekeyB = parseInt(lineB.lineuniquekey, 10);
-    
-        return lineUniquekeyA - lineUniquekeyB;
-    });
-    
-    
-    
-    console.log("sortedKeys :",sortedKeys)
-    var groupTaxcode = {};
-
-    // Agrupar usando el arreglo de claves ordenadas
-    for (var i = 0; i < sortedKeys.length; i++) {
-        var lineuniquekey = sortedKeys[i];
-        var item = jsonLines[lineuniquekey];
-        var key = item.taxcode;
-
-        if (!groupTaxcode[key]) {
-            groupTaxcode[key] = item;
-        } else {
-            groupTaxcode[key].debitamount += item.debitamount;
-        }
-    }
-    return groupTaxcode;
+    console.log(listTransaction);
+    console.log("cantidad :"+listTransaction.length);
 }
 
-var jsonLines = {
-    "1": {
-        "department": "Finance",
-        "location": "New York",
-        "class": "C",
-        "taxcode": "TX001",
-        "debitamount": 25,
-        "item": "2001",
-        "sublist": "expense",
-        "lineuniquekey": "1"
-    },
-    "2": {
-        "department": "HR",
-        "location": "Boston",
-        "class": "D",
-        "taxcode": "TX002",
-        "debitamount": 30,
-        "item": "2002",
-        "sublist": "expense",
-        "lineuniquekey": "2"
-    },
-    "3": {
-        "department": "Sales",
-        "location": "New York",
-        "class": "",
-        "taxcode": "TX001",
-        "debitamount": 50,
-        "item": "1001",
-        "sublist": "item",
-        "lineuniquekey": "3"
-    },
-    "4": {
-        "department": "Sales",
-        "location": "Los Angeles",
-        "class": "B",
-        "taxcode": "TX001",
-        "debitamount": 75,
-        "item": "1002",
-        "sublist": "item",
-        "lineuniquekey": "4"
-    },
-    "5": {
-        "department": "Marketing",
-        "location": "San Francisco",
-        "class": "A",
-        "taxcode": "TX002",
-        "debitamount": 100,
-        "item": "1003",
-        "sublist": "item",
-        "lineuniquekey": "5"
-    }
-};
-
-
-console.log(orderLines(jsonLines));
+splitTransaction("OSF-BRSP NFS-e-3504 OSF-BRSP NFS-e-3503 OSF-BRSP NFS-e-3500 OSF-BRSP NFS-e-3501 OSF-BRSP NFS-e-3502 OSF-BRSP NFS-e-01 OSF-BRSP NFS-e-3505 OSF-BRSP NFS-e-3506 OSF-BRSP NFS-e-3498 OSF-BRSP NFS-e-3499 OSF-BRSP NFS-e-3497 OSF-BRSP NFS-e-3507 OSF-BRSP NFS-e-3508 OSF-BRSP NFS-e-3509 OSF-BRSP NFS-e-3510 OSF-BRSP NFS-e-3478 OSF-BRSP NFS-e-3511 OSF-BRF NFS-e-5651 OSF-BRSP NFS-e-3484 OSF-BRF NFS-e-5665 OSF-BRF NFS-e-5650 OSF-BRSP NFS-e-3512 OSF-BRF NFS-e-5658 OSF-BRF NFS-e-5659 OSF-BRF NFS-e-5660 OSF-BRF NFS-e-5664 OSF-BRF NFS-e-5662 OSF-BRSP NFS-e-08 OSF-BRSP NFS-e-3521 OSF-BRSP NFS-e-3515 OSF-BRSP NFS-e-3475 OSF-BRSP NFS-e-3522 OSF-BRSP NFS-e-3483 OSF-BRF NFS-e-5669 OSF-BRF NFS-e-5654 OSF-BRF NFS-e-5656 OSF-BRSP NFS-e-04 OSF-BRSP NFS-e-03 OSF-BRSP NFS-e-12 OSF-BRSP NFS-e-13 OSF-BRSP NFS-e-14 OSF-BRSP NFS-e-15 OSF-BRSP NFS-e-16 OSF-BRSP NFS-e-3476 OSF-BRSP NFS-e-3527 OSF-BRSP NFS-e-3529 OSF-BRSP NFS-e-3530 OSF-BRSP NFS-e-3526 OSF-BRSP NFS-e-3531 OSF-BRSP NFS-e-3533 OSF-BRSP NFS-e-3532 OSF-BRSP NFS-e-3528 OSF-BRSP NFS-e-3525 OSF-BRSP NFS-e-3555 OSF-BRSP NFS-e-3496 OSF-BRSP NFS-e-3541 OSF-BRSP NFS-e-3542 OSF-BRSP NFS-e-3543 OSF-BRSP NFS-e-3544 OSF-BRSP NFS-e-3548 OSF-BRSP NFS-e-3535 OSF-BRSP NFS-e-3536 OSF-BRSP NFS-e-3537 OSF-BRSP NFS-e-3540 OSF-BRF NFS-e-5671 OSF-BRF NFS-e-5672 OSF-BRF NFS-e-5675 OSF-BRF NFS-e-5674 OSF-IF NFS-e-5677 OSF-IF NFS-e-5678 OSF-BRF NFS-e-5673 OSF-BRSP NFS-e-3545 OSF-BRSP NFS-e-3546 OSF-BRSP NFS-e-11 OSF-BRSP NFS-e-18 OSF-BRSP NFS-e-3551 OSF-BRSP NFS-e-3550 OSF-BRSP NFS-e-3549 OSF-BRSP NFS-e-3552 OSF-BRSP NFS-e-3553 OSF-BRSP NFS-e-3554 OSF-BRSP NFS-e-3559 OSF-BRSP NFS-e-3558 OSF-BRSP NFS-e-3513 OSF-BRSP NFS-e-3556 OSF-BRSP NFS-e-3557 OSF-BRSP NFS-e-10 OSF-IF NFS-e-5679 OSF-BRF NFS-e-5720 OSF-BRF NFS-e-5721 OSF-BRF NFS-e-5682 OSF-BRF NFS-e-5676 OSF-BRSP NFS-e-3539 OSF-BRF NFS-e-5655 OSF-BRF NFS-e-5685 OSF-BRF NFS-e-5687 OSF-BRF NFS-e-5684 OSF-BRF NFS-e-5686 OSF-BRF NFS-e-5692 OSF-BRF NFS-e-5693 OSF-BRF NFS-e-5694 OSF-BRF NFS-e-5683 OSF-BRF NFS-e-5653 OSF-BRF NFS-e-5639 OSF-BRSP NFS-e-3524 OSF-BRSP NFS-e-17 OSF-BRSP NFS-e-19 OSF-BRSP NFS-e-23 OSF-BRSP NFS-e-22 OSF-BRSP NFS-e-24 OSF-BRSP NFS-e-21 OSF-BRF NFS-e-5710 OSF-BRSP NFS-e-3565 OSF-BRF NFS-e-5698 OSF-BRSP NFS-e-26 OSF-BRSP NFS-e-29 OSF-BRSP NFS-e-3560 OSF-BRSP NFS-e-3561 OSF-BRSP NFS-e-3566 OSF-BRSP NFS-e-3567 OSF-BRSP NFS-e-3562 OSF-BRSP NFS-e-3568 OSF-BRSP NFS-e-3569 OSF-BRSP NFS-e-3517 OSF-BRSP NFS-e-32 OSF-BRF NFS-e-5736 OSF-BRF NFS-e-5718 OSF-BRSP NFS-e-33 OSF-BRSP NFS-e-3578 OSF-BRSP NFS-e-3577 OSF-BRSP NFS-e-3575 OSF-BRSP NFS-e-3576 OSF-BRSP NFS-e-3573 OSF-BRSP NFS-e-3574 OSF-BRSP NFS-e-25 OSF-BRSP NFS-e-3579 OSF-BRF NFS-e-5690 OSF-BRSP NFS-e-3581 OSF-BRSP NFS-e-3582 OSF-BRSP NFS-e-37 OSF-BRSP NFS-e-38 OSF-BRSP NFS-e-39 OSF-BRSP NFS-e-3583 OSF-BRSP NFS-e-3585 OSF-BRSP NFS-e-3563 OSF-BRSP NFS-e-3584 OSF-BRSP NFS-e-3586 OSF-BRSP NFS-e-3547 OSF-BRSP NFS-e-35 OSF-BRSP NFS-e-20 OSF-BRF NFS-e-5705 OSF-BRF NFS-e-5691 OSF-BRF NFS-e-5735 OSF-BRSP NFS-e-3572 OSF-BRSP NFS-e-40 OSF-BRSP NFS-e-3523 OSF-BRF NFS-e-5733 OSF-BRF NFS-e-5731 OSF-BRF NFS-e-5732 OSF-BRF NFS-e-5726 OSF-BRF NFS-e-5743 OSF-BRF NFS-e-5689 OSF-BRF NFS-e-5670 OSF-BRSP NFS-e-45 OSF-BRSP NFS-e-49 OSF-BRSP NFS-e-50 OSF-BRSP NFS-e-48 OSF-BRSP NFS-e-51 OSF-BRSP NFS-e-57 OSF-BRSP NFS-e-54 OSF-BRSP NFS-e-52 OSF-BRSP NFS-e-59 OSF-BRSP NFS-e-56 OSF-BRSP NFS-e-58 OSF-BRSP NFS-e-55 OSF-BRSP NFS-e-53 OSF-BRSP NFS-e-69 OSF-BRSP NFS-e-70 OSF-BRSP NFS-e-68 OSF-BRSP NFS-e-3570 OSF-BRSP NFS-e-3580 OSF-BRSP NFS-e-71 OSF-BRSP NFS-e-64 OSF-BRSP NFS-e-65 OSF-BRSP NFS-e-66 OSF-BRF NFS-e-5722 OSF-BRSP NFS-e-67 OSF-BRSP NFS-e-73 OSF-BRSP NFS-e-62 OSF-BRSP NFS-e-60 OSF-BRSP NFS-e-74 OSF-BRSP NFS-e-75 OSF-BRSP NFS-e-76 OSF-BRSP NFS-e-81 OSF-BRSP NFS-e-44 OSF-BRSP NFS-e-78 OSF-BRSP NFS-e-80 OSF-BRF NFS-e-5688 OSF-BRSP NFS-e-61 OSF-BRSP NFS-e-47 OSF-BRSP NFS-e-3571 OSF-BRSP NFS-e-63 OSF-BRSP NFS-e-84 OSF-BRSP NFS-e-90 OSF-BRSP NFS-e-89 OSF-BRSP NFS-e-98 OSF-BRSP NFS-e-94 OSF-BRSP NFS-e-93 OSF-BRSP NFS-e-103 OSF-BRSP NFS-e-95 OSF-BRSP NFS-e-101 OSF-BRSP NFS-e-100 OSF-BRSP NFS-e-102 OSF-BRSP NFS-e-118 OSF-BRSP NFS-e-112 OSF-BRSP NFS-e-113 OSF-BRSP NFS-e-110 OSF-BRSP NFS-e-111 OSF-BRSP NFS-e-115 OSF-BRSP NFS-e-114 OSF-BRSP NFS-e-116 OSF-BRSP NFS-e-91 OSF-BRSP NFS-e-85 OSF-BRSP NFS-e-86 OSF-BRSP NFS-e-119 OSF-BRSP NFS-e-117 OSF-BRSP NFS-e-120 OSF-BRSP NFS-e-121 OSF-BRSP NFS-e-124 OSF-BRSP NFS-e-122 OSF-BRSP NFS-e-82 OSF-BRSP NFS-e-138 OSF-BRSP NFS-e-92 OSF-BRSP NFS-e-125 OSF-BRSP NFS-e-126 OSF-BRSP NFS-e-127 OSF-BRSP NFS-e-109 OSF-BRSP NFS-e-130 OSF-BRSP NFS-e-133 OSF-BRSP NFS-e-128 OSF-BRSP NFS-e-129 OSF-BRSP NFS-e-139 OSF-BRSP NFS-e-137 OSF-BRSP NFS-e-151 OSF-BRSP NFS-e-142 OSF-BRSP NFS-e-134 OSF-BRSP NFS-e-87 OSF-BRSP NFS-e-88 OSF-BRSP NFS-e-107 OSF-BRSP NFS-e-108 OSF-BRSP NFS-e-96 OSF-BRSP NFS-e-146 OSF-BRSP NFS-e-149 OSF-BRSP NFS-e-140 OSF-BRSP NFS-e-104 OSF-BRSP NFS-e-105 OSF-BRSP NFS-e-97 OSF-BRSP NFS-e-145 OSF-BRSP NFS-e-158 OSF-BRSP NFS-e-159 OSF-BRSP NFS-e-156 OSF-BRSP NFS-e-154 OSF-BRSP NFS-e-169 OSF-BRSP NFS-e-153 OSF-BRSP NFS-e-170 OSF-BRSP NFS-e-155 OSF-BRSP NFS-e-157 OSF-BRSP NFS-e-147 OSF-BRSP NFS-e-148 OSF-BRSP NFS-e-160 OSF-BRSP NFS-e-161 OSF-BRSP NFS-e-144 OSF-BRSP NFS-e-167 OSF-BRSP NFS-e-168 OSF-BRSP NFS-e-166 OSF-BRSP NFS-e-150 OSF-BRSP NFS-e-136 OSF-BRSP NFS-e-106 OSF-BRSP NFS-e-171 OSF-BRSP NFS-e-172 OSF-BRSP NFS-e-163 OSF-BRSP NFS-e-143 OSF-BRSP NFS-e-141 OSF-BRSP NFS-e-185 OSF-BRSP NFS-e-176 OSF-BRSP NFS-e-179 OSF-BRSP NFS-e-178 OSF-BRSP NFS-e-186 OSF-BRSP NFS-e-177 OSF-BRSP NFS-e-181 OSF-BRSP NFS-e-180 OSF-BRSP NFS-e-135 OSF-BRSP NFS-e-187 OSF-BRSP NFS-e-184 OSF-BRSP NFS-e-200 OSF-BRSP NFS-e-190 OSF-BRSP NFS-e-239 OSF-BRSP NFS-e-240 OSF-BRSP NFS-e-241 OSF-BRSP NFS-e-193 OSF-BRSP NFS-e-201 OSF-BRSP NFS-e-203 OSF-BRSP NFS-e-194 OSF-BRSP NFS-e-195 OSF-BRSP NFS-e-205 OSF-BRSP NFS-e-217 OSF-BRSP NFS-e-208 OSF-BRSP NFS-e-209 OSF-BRSP NFS-e-214 OSF-BRSP NFS-e-215 OSF-BRSP NFS-e-216 OSF-BRSP NFS-e-165 OSF-BRSP NFS-e-223 OSF-BRSP NFS-e-220 OSF-BRSP NFS-e-221 OSF-BRSP NFS-e-211 OSF-BRSP NFS-e-213 OSF-BRSP NFS-e-212 OSF-BRSP NFS-e-222 OSF-BRSP NFS-e-198 OSF-BRSP NFS-e-232 OSF-BRSP NFS-e-226 OSF-BRSP NFS-e-227 OSF-BRSP NFS-e-228 OSF-BRSP NFS-e-231 OSF-BRSP NFS-e-234 OSF-BRSP NFS-e-235 OSF-BRSP NFS-e-229 OSF-BRSP NFS-e-230 OSF-BRSP NFS-e-252 OSF-BRSP NFS-e-224 OSF-BRSP NFS-e-225 OSF-BRSP NFS-e-233 OSF-BRSP NFS-e-242 OSF-BRSP NFS-e-199 OSF-BRSP NFS-e-79 OSF-BRSP NFS-e-236 OSF-BRSP NFS-e-237 OSF-BRSP NFS-e-238 OSF-BRSP NFS-e-175_01 OSF-BRSP NFS-e-175_02 OSF-BRSP NFS-e-175_03 OSF-BRSP NFS-e-175_04 OSF-BRSP NFS-e-207 OSF-BRSP NFS-e-246 OSF-BRSP NFS-e-247 OSF-BRSP NFS-e-248 OSF-BRSP NFS-e-259 OSF-BRSP NFS-e-260 OSF-BRSP NFS-e-262 OSF-BRSP NFS-e-263 OSF-BRSP NFS-e-264 OSF-BRSP NFS-e-245 OSF-BRSP NFS-e-253 OSF-BRSP NFS-e-275 OSF-BRSP NFS-e-204")
