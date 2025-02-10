@@ -21,14 +21,14 @@ define([
 
     (record, runtime, file, search, format, log, url, translation, suiteAppInfo, config) => {
 
-       // let scriptParameters = {};
+        // let scriptParameters = {};
 
 
 
         const getInputData = () => {
-            
+
             try {
-                
+
                 let transactions = loadcsv();
                 //loadcsv();
                 return transactions;
@@ -74,7 +74,7 @@ define([
                     });
                 } else {
 
-                    
+
                     /*
                     let objItem = new Object();
                     let arrItems = context.values;
@@ -128,7 +128,7 @@ define([
                     arrTransactions.push(JSON.parse(value));
                     return true;
                 });
-                log.error("arrTransactions",arrTransactions)
+                log.error("arrTransactions", arrTransactions)
 
             } catch (error) {
                 log.error("error Summarize", error);
@@ -144,7 +144,7 @@ define([
             });
 
             const csvContent = csvFile.getContents();
-            log.error("csvContent",csvContent)
+            log.error("csvContent", csvContent)
             return parseCsvToArray(csvContent)
         }
 
@@ -152,14 +152,14 @@ define([
             // Separa el contenido en líneas (considerando diferentes saltos de línea)
             let lines = csvText.split(/\r\n|\n/);
             let result = [];
-            
+
             if (lines.length === 0) {
                 return result;
             }
-            
+
             // La primera línea contiene los encabezados
             let headers = lines[0].split(',');
-            
+
             // Recorre las líneas restantes
             for (let i = 1; i < lines.length; i++) {
                 let line = lines[i].trim();
@@ -167,37 +167,41 @@ define([
                 if (line === '') {
                     continue;
                 }
-                
+
                 // Separa los valores de la línea
                 let values = line.split(',');
                 let obj = {};
-                
+
                 // Crea un objeto asignando cada valor a su respectivo encabezado
                 for (let j = 0; j < headers.length; j++) {
                     // Si lo deseas, aquí puedes transformar el nombre de la propiedad
                     // Ejemplo: headers[j].trim().toLowerCase() para usar minúsculas
-                    obj[ headers[j].trim() ] = values[j] ? values[j].trim() : '';
+                    obj[headers[j].trim()] = values[j] ? values[j].trim() : '';
                 }
-                
+
                 result.push(obj);
             }
-            log.error("result",result)
+            log.error("result", result)
             return result;
         }
-        
+
         const getInfoData = (transaction) => {
-            log.error("transaction",transaction)
+            log.error("transaction", transaction)
             search.create({
                 type: "transaction",
-                filters: [['mainline', 'is', 'T'],  
-                          'AND',
-                          ['tranid', 'is', transaction.transaction]], 
-                columns: ['internalid']
+                filters: [['mainline', 'is', 'T'],
+                    'AND',
+                ['internalid', 'is', transaction.internalid]],
+                columns: ['internalid','applyingTransaction']
             }).run().each(result => {
-                log.error("result",result)
-                const {getValue,columns} = result;
-                transaction["internalid"] = getValue(columns[0]);
-                log.error("internalid",getValue(columns[0]))
+                log.error("result", result)
+                const { getValue, columns } = rWesult;
+
+                if (condition) {
+                    
+                }
+                transaction["relatedRecord"] = getValue(columns[0]);
+                return true;
             })
         }
         return { getInputData, map, summarize };
