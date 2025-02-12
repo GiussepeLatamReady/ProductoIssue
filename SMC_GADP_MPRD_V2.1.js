@@ -41,6 +41,7 @@ define([
         }
 
         const map = (context) => {
+            let transaction = JSON.parse(context.value);
             try {
                 if (context.value.indexOf("isError") != -1) {
                     context.write({
@@ -48,19 +49,21 @@ define([
                         value: context.value
                     });
                 } else {
-                    let transaction = JSON.parse(context.value);
-                    //getInfoData(transaction);
-                    //addItemDetails(transaction);
+                    
+                    let objTransaction = getInfoData(transaction);
+                    let csvContent = generateFile(objTransaction,transaction.internalid)
+                    //log.error("csvContent",csvContent)
                     context.write({
                         key: transaction.index,
-                        value: transaction
+                        value: csvContent
                     });
                 }
             } catch (error) {
+                log.error("error map transaction", transaction);
                 log.error("error map", error);
                 context.write({
                     key: context.key,
-                    value: ["isError", error.message]
+                    value: ["isError " + transaction.internalid + " - " + transaction.transaction, error.message]
                 });
             }
         }
@@ -125,22 +128,41 @@ define([
                 let arrTransactions = new Array();
 
                 context.output.iterator().each(function (key, value) {
-                    arrTransactions.push(JSON.parse(value));
+                    arrTransactions.push(value);
                     return true;
                 });
-                log.error("arrTransactions", arrTransactions)
+
+                const title = "index,Invoice,Tranid,amount,Memo,Tranid,amount,Memo,reclasificacion"+ '\n'
+                let fileContent = arrTransactions.map(transaction => transaction + '\n').join('');
+                //log.error("fileContent",fileContent)
+                fileContent = `${title}${fileContent}\r\n`
+                saveFile(fileContent,"transaction_BR_gadp.csv","371268")
+                //log.error("arrTransactions", arrTransactions)
 
             } catch (error) {
                 log.error("error Summarize", error);
 
             }
 
-
         }
+
+        const saveFile = (fileContent, nameFile, folderId) => {
+           
+            if (!folderId) return;
+            const fileGenerate = file.create({
+                name: nameFile,
+                fileType: file.Type.CSV,
+                contents: fileContent,
+                encoding: file.Encoding.UTF8,
+                folder: folderId
+            });
+
+            return fileGenerate.save();
+        };
 
         const loadcsv = () => {
             const csvFile = file.load({
-                id: '3918704'
+                id: '3918703'
             });
 
             const csvContent = csvFile.getContents();
@@ -186,23 +208,95 @@ define([
         }
 
         const getInfoData = (transaction) => {
-            log.error("transaction", transaction)
+            //log.error("transaction", transaction)
+            let objTransaction = {};
+
+            objTransaction[transaction.internalid] = {
+                index:transaction.index,
+                tranid_old:transaction.transaction
+            };
             search.create({
                 type: "transaction",
-                filters: [['mainline', 'is', 'T'],
+                filters: [
+                    ['mainline', 'is', 'T'],
                     'AND',
-                ['internalid', 'is', transaction.internalid]],
-                columns: ['internalid','applyingTransaction']
+                    ['internalid', 'is', transaction.internalid]
+                ],
+                columns: ['internalid','tranid','entity','applyingTransaction.type','applyingTransaction.fxamount','applyingTransaction.tranid','applyingTransaction.internalid','applyingTransaction.memo']
             }).run().each(result => {
-                log.error("result", result)
-                const { getValue, columns } = rWesult;
+                //log.error("result", result)
+                const { getValue,getText, columns } = result;
+                let internalid = getValue("internalid");
 
-                if (condition) {
-                    
+                objTransaction[internalid].tranid_new = getValue('tranid');
+                objTransaction[internalid].entity = getValue('entity');
+                let ObjApply = {
+                    type: getText(columns[3]),
+                    amount: getValue(columns[4]),
+                    tranid: getValue(columns[5]),
+                    internalid: getValue(columns[6]),
+                    memo: getValue(columns[7])
                 }
-                transaction["relatedRecord"] = getValue(columns[0]);
+
+                if (!objTransaction[internalid].apply) objTransaction[internalid].apply = [];
+                objTransaction[internalid].apply.push(ObjApply)
                 return true;
             })
+            
+            let payment = objTransaction[transaction.internalid].apply.find(tx => tx.type === "Payment").internalid;
+            let taxResult = [];
+
+            if (payment) {
+                search.create({
+                    type: "transaction",
+                    filters: [
+                        ['mainline', 'is', 'T'],
+                        'AND',
+                        ['internalid', 'anyof', payment]
+                    ],
+                    columns: ['internalid','CUSTRECORD_LMRY_BR_TRANSACTION.internalid']
+                }).run().each(result => {
+                    //log.error("result", result)
+                    const { getValue,getText, columns } = result;
+    
+                    if (getValue(columns[1])) {
+                        taxResult.push(getValue(columns[1]));
+                    }
+                    return true;
+                })    
+            }
+            
+            objTransaction[transaction.internalid].statusTaxResult = taxResult.length != 0 ;
+            //objTransaction[transaction.internalid].taxResult = taxResult;
+
+            //log.error("taxResult",taxResult)
+            //log.error("objTransaction",objTransaction)
+            return objTransaction
         }
+
+
+        const generateFile = (objTransaction,internalid) => {
+
+            const transaction = objTransaction[internalid];
+            const {index,tranid_new,apply,statusTaxResult} = transaction;
+
+            let payment = apply.find(tx => tx.type === "Payment");
+            let creditMemo = apply.find(tx => tx.type === "Credit Memo");
+            if (!payment) {
+                payment = {}
+                payment.tranid = "No tiene pago";
+                payment.amount = 0;
+                payment.memo = "----";
+            }
+            if (!creditMemo) {
+                creditMemo = {}
+                creditMemo.tranid = "No tiene retencion";
+                creditMemo.amount = 0;
+                creditMemo.memo = "----";
+            }
+           return `${index},${tranid_new},${payment.tranid},${payment.amount},${payment.memo},${creditMemo.tranid},${creditMemo.amount},${creditMemo.memo},${statusTaxResult}`;
+        }
+
+
         return { getInputData, map, summarize };
     });
