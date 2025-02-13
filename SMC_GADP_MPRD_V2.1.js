@@ -159,41 +159,25 @@ define([
         };
 
         const getTransaction = () => {
-            const invoices = [];
+            let invoices = [];
+
             search.create({
-                type: "transaction",
+                type: "customrecord_lmry_co_head_wht_cal_log",
                 //settings:[{"name":"consolidationtype","value":"ACCTTYPE"},{"name":"includeperiodendtransactions","value":"F"}],
                 filters:
                     [
-                        ["subsidiary","anyof","7","8"],
-                        "AND",
-                        ["type", "anyof", "CustInvc"],
-                        "AND",
-                        ["mainline", "is", "T"],
-                        "AND",
-                        ["applyingtransaction.memomain", "startswith", "Latam - WHT"],
-                        "AND",
-                        ["postingperiod", "abs", "224"],
-                        "AND",
-                        ["applyingtransaction.custbody_lmry_reference_transaction", "anyof", "@NONE@"]
+                        ["internalid","anyof","3"]
                     ],
                 columns:
                     [
-                        "internalid",
-                        "applyingTransaction.internalid",
-                        "applyingTransaction.memomain"
+                        "custrecord_lmry_co_hwht_log_transactions"
                     ]
             }).run().each(result => {
                 const {getValue,columns} = result;
-                const internalid = getValue(columns[0]);
-                const invoice = {
-                    invoiceID:internalid,
-                    apply:getValue(columns[1]),
-                    apply_memo:getValue(columns[2]),
-                }
-                if (invoice.apply_memo.startsWith("Latam - WHT")) invoices.push(invoice)
-                return true;
+                invoices = JSON.parse(getValue(columns[0]));
             });
+
+            invoices.filter(({state}) => state == "Error")
             return invoices;
         }
 
