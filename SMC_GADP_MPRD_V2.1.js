@@ -31,6 +31,7 @@ define([
 
                 let transactions = getTransaction();
                 log.error("Cantidad de transacciones",transactions.length)
+                log.error("transactions",transactions)
                 //loadcsv();
                 return transactions;
             } catch (error) {
@@ -51,7 +52,9 @@ define([
                     });
                 } else {
                     //log.error("transaction map",transaction)
-                    referenceTransaction(transaction);
+                    //transaction = addItems(transaction);
+                    //log.error("transaction",transaction)
+                    deleteTaxResults(transaction.id)
                     context.write({
                         key: context.key,
                         value: transaction
@@ -120,7 +123,32 @@ define([
             }
         }
 
-
+        const deleteTaxResults = (id) => {
+            if (!id) return false;
+            const taxresult =[];
+            let searchRecordLog = search.create({
+                type: 'customrecord_lmry_br_transaction',
+                filters: [
+                    ['custrecord_lmry_br_transaction', 'is', id]
+                ],
+                columns: [
+                    'internalid'
+                ]
+            })
+            searchRecordLog.run().each(function (result) {
+                let idTax = result.getValue(result.columns[0]);
+    
+                record.delete({
+                    type: 'customrecord_lmry_br_transaction',
+                    id: idTax,
+                    isDynamic: true
+                });
+                taxresult.push(idTax);
+                return true;
+            });
+            log.error("borrado para invoice",id)
+            log.error("borrado para tax result",taxresult)
+        }
         const summarize = (context) => {
             try {
                 //setConfiguration();
@@ -130,11 +158,11 @@ define([
                     arrTransactions.push(value);
                     return true;
                 });
-                const title = "internalid,Creditmemo,Creditmemo (Main)" + '\n'
+                const title = "Id Interno,Tranid,Items Inactivos" + '\n'
                 let fileContent = arrTransactions.map(transaction => transaction + '\n').join('');
                 //log.error("fileContent",fileContent)
                 fileContent = `${title}${fileContent}\r\n`
-                saveFile(fileContent, "retenciones.csv", "3101091")
+                //saveFile(fileContent, "items_inactivos.csv", "3101091")
                 //log.error("arrTransactions", arrTransactions)
 
             } catch (error) {
@@ -166,7 +194,7 @@ define([
                 //settings:[{"name":"consolidationtype","value":"ACCTTYPE"},{"name":"includeperiodendtransactions","value":"F"}],
                 filters:
                     [
-                        ["internalid","anyof","3"]
+                        ["internalid","anyof","1"]
                     ],
                 columns:
                     [
@@ -177,25 +205,48 @@ define([
                 invoices = JSON.parse(getValue(columns[0]));
             });
 
-            invoices.filter(({state}) => state == "Error")
+            invoices = invoices.filter(({state}) => state == "Error")
             return invoices;
         }
 
 
-        const referenceTransaction = (transaction) => {
-            const {invoiceID,apply} = transaction;
-            record.submitFields({
-                type: "creditmemo",
-                id: apply,
-                values: {
-                    custbody_lmry_reference_transaction: invoiceID
-                },
-                options: {
-                    enableSourcing: false,
-                    ignoreMandatoryFields: true,
-                    disableTriggers: true
-                }
+        const addItems = (transaction) => {
+            const {id,state} = transaction;
+            search.create({
+                type: "invoice",
+                //settings: [{ "name": "consolidationtype", "value": "ACCTTYPE" }, { "name": "includeperiodendtransactions", "value": "F" }],
+                filters:
+                    [
+                        ["internalid", "anyof", id],
+                        "AND",
+                        ["item", "noneof", "@NONE@"],
+                        "AND",
+                        ["taxline", "is", "F"],
+                        "AND",
+                        ["shipping", "is", "F"],
+                        "AND",
+                        ["cogs", "is", "F"],
+                        "AND",
+                        ["item.isinactive", "is", "T"]
+                    ],
+                columns: ["internalid","tranid","item","item.isinactive"]
+            }).run().each(result => {
+                const {getValue,getText,columns} = result;
+                if (!transaction.items) transaction.items = [];
+                transaction.tranid = getValue(columns[1])
+                transaction.items.push({
+                    id: getValue(columns[2]),
+                    name: getText(columns[2]),
+                    isinactive: getValue(columns[3])
+                });
+                return true;
             });
+            let itemsText = transaction.items.map(item => {
+                return `${item.name} (${item.id}) (${item.isinactive})`
+            });
+
+            itemsText = itemsText.join(",");
+            return `${transaction.id},${transaction.tranid},${itemsText}`
         }
 
         const parseCsvToArray = (csvText) => {
