@@ -11,7 +11,7 @@ define([
     "N/runtime",
     "N/search",
     "N/log",
-    './CO_Library_Mensual/LMRY_CO_Header_WHT_calculation_LBRY_V2.1',
+    './CO_Library_Mensual/SMC_CO_Header_WHT_calculation_LBRY_V2.1',
     "N/format"
 ],
 
@@ -37,6 +37,7 @@ define([
         const map = (mapContext) => {
 
             const value = JSON.parse(mapContext.value);
+            log.error("value [map]",value)
             if (value.code === "ERROR") {
                 mapContext.write({
                     key: value.code,
@@ -48,8 +49,11 @@ define([
                 try {
                     if (data["id"]) {
                         const transaction = lbryWHTHeader.getTransaction(data.id);
-                        const taxResults    = lbryWHTHeader.buildTaxResults(transaction);
+                        const taxResults = lbryWHTHeader.buildTaxResults(transaction);
+                        log.error("transaction [map]",transaction)
+                        log.error("taxResults [map]",taxResults)
 
+                        
                         taxResults.forEach(taxResult => {
                             mapContext.write({
                                 key: taxResult.item.lineuniquekey,
@@ -59,7 +63,8 @@ define([
                                     taxResult
                                 }
                             });
-                        });                   
+                        });           
+                            
                     }
                 } catch (error) {
                     log.error("Error [map]", error);
@@ -83,6 +88,7 @@ define([
 
             const { values, key } = reduceContext;
             const data = values.map(value => JSON.parse(value));
+            log.error("data [reduce]",data)
             if (data[0].code == "ERROR") {
                 data[0].transaction.state = "Error";
                 reduceContext.write({
@@ -140,6 +146,8 @@ define([
             });
 
             try {
+                log.error("data [summarize]",data)
+                log.error("transactionIDs [summarize]",transactionIDs)
                 //Agrupar transacciones
                 const groupedTransactions = data.reduce((transactions, element) => {
 
@@ -158,10 +166,10 @@ define([
                         //log.error("errors entro","entrosss")
                         //if (transactions.length != errors.length) {
                         const message = errors[0].message;
-                       // createRecordLog(transactions, "Ocurrió un error", message) ****************
+                        createRecordLog(transactions, "Ocurrió un error", message)
                         //}
                     } else {
-                        //createRecordLog(transactions, "Finalizado", 'Las transacciones han sido procesadas con exito') *************
+                        createRecordLog(transactions, "Finalizado", 'Las transacciones han sido procesadas con exito') 
                     }
                 });
             } catch (error) {
@@ -172,7 +180,8 @@ define([
         const getTransactions = (typeProcess) => {
 
             const internalids = [
-                "4576701"
+                "4505745",
+                "4345724"
             ];
 
             let filters = [
