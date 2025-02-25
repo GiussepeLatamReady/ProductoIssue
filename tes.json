@@ -1,7 +1,11 @@
-{ type: "error.SuiteScriptError", name: "INVALID_FLD_VALUE", message: "You have entered an Invalid Field Value 318 for the following field: custbody_lmry_document_type", id: "", stack: [
-        "Error\n at RecordInvoker.setValue (suitescript/resources/javascript/record/serverRecordService.js:443:5)\n at NetSuiteObject.thenableFunction() (suitescript/resources/javascript/record/proxy.js:115:24)\n at Object.execute (/SuiteScripts/TEST_GADP_SCHDL_V2.1.js:41:40)"
-    ], cause: { type: "internal error", code: "INVALID_FLD_VALUE", details: "You have entered an Invalid Field Value 318 for the following field: custbody_lmry_document_type", userEvent: null, stackTrace: [
-            "Error\n at RecordInvoker.setValue (suitescript/resources/javascript/record/serverRecordService.js:443:5)\n at NetSuiteObject.thenableFunction() (suitescript/resources/javascript/record/proxy.js:115:24)\n at Object.execute (/SuiteScripts/TEST_GADP_SCHDL_V2.1.js:41:40)"
-        ], notifyOff: false
-    }, notifyOff: false, userFacing: true
-}
+[
+   {
+      "id": "4576702",
+      "tranid": "LWHT 4576702",
+      "trandate": "2024-04-06",
+      "memo": "Latam - WHT ReteFteCompras 2.5%.",
+      "amount": "36554.62",
+      "key": "",
+      "recordType": "vendorbill"
+   }
+]
