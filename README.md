@@ -1,10 +1,12 @@
 
-# [CP2400485   ]()
+# [LR0014274   ]()
 
 
 ## Description of the Requirement
 
+Argentina
 
+Verificar el proceso de creacion de percepciones 
 
 
 ## Description of the solution

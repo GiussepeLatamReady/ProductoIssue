@@ -27,7 +27,9 @@ function logicaAutoPercepciones(invoiceRecord, numLines, CodeCountry) {
       if (auto_wht && validarTipoDoc(tipo_Docum,invoiceRecord.type) && (eDocStatus != "Sent" && eDocStatus != "Enviado")) {
         seteoSuma = true;
         var hayTributo = contieneTributo(invoiceRecord, numLines, cantidad);
+
         if (!hayTributo) {
+
           var tradate = invoiceRecord.getValue("trandate");
           tradate = format.format({ value: tradate, type: format.Type.DATE });
           var entity = invoiceRecord.getValue("entity");
@@ -453,9 +455,9 @@ function logicaAutoPercepciones(invoiceRecord, numLines, CodeCountry) {
 
   function logicaLlenado_conFiltro_paranoRepetidos_enSublista(appliesTo, result, invoiceRecord, CodeCountry, tipoRedondeo, segmentacion, infoItem, bySubsidiary, result_name,array_omitir) {
       
-      log.error('547 - logicaLlenado_conFiltro_paranoRepetidos_enSublista',"infoItem: "+infoItem+" || appliesTo: "+appliesTo+" || result: "+ result_name);
+    log.error('547 - logicaLlenado_conFiltro_paranoRepetidos_enSublista',"infoItem: "+infoItem+" || appliesTo: "+appliesTo+" || result: "+ result_name);
 
-      log.error('549 - logicaLlenado_conFiltro_paranoRepetidos_enSublista - array_omitir',array_omitir);
+    log.error('549 - logicaLlenado_conFiltro_paranoRepetidos_enSublista - array_omitir',array_omitir);
 
     var FeaDepa = runtime.isFeatureInEffect({ feature: "DEPARTMENTS" });
     var FeaLoca = runtime.isFeatureInEffect({ feature: "LOCATIONS" });
@@ -467,7 +469,7 @@ function logicaAutoPercepciones(invoiceRecord, numLines, CodeCountry) {
     var pref_loc = userObj.getPreference({ name: "LOCMANDATORY" });
     var pref_clas = userObj.getPreference({ name: "CLASSMANDATORY" });
 
-    if(invoiceRecord.type == 'creditmemo'){
+    /*if(invoiceRecord.type == 'creditmemo'){
 
       var discountGlobal = getDiscountGlobal(invoiceRecord);
 
@@ -478,11 +480,15 @@ function logicaAutoPercepciones(invoiceRecord, numLines, CodeCountry) {
     }
 
     discountGlobal = parseFloat(discountGlobal);
-    discountGlobal = Math.abs(discountGlobal);
+    discountGlobal = Math.abs(discountGlobal);*/
 
-    var subtotal_invoice = parseFloat(invoiceRecord.getValue("subtotal")) * parseFloat(exchange_global) - parseFloat(discountGlobal) * parseFloat(exchange_global);
-    var total_invoice = parseFloat(invoiceRecord.getValue("total")) * parseFloat(exchange_global) - parseFloat(discountGlobal) * parseFloat(exchange_global);
-    var taxtotal_invoice = parseFloat(invoiceRecord.getValue("taxtotal")) * parseFloat(exchange_global) - parseFloat(discountGlobal) * parseFloat(exchange_global);
+    log.debug('subtotal', invoiceRecord.getValue("subtotal"));
+    log.debug('total', invoiceRecord.getValue("total"));
+    log.debug('taxtotal', invoiceRecord.getValue("taxtotal"));
+
+    var subtotal_invoice = parseFloat(invoiceRecord.getValue("subtotal")) * parseFloat(exchange_global);
+    var total_invoice = parseFloat(invoiceRecord.getValue("total")) * parseFloat(exchange_global);
+    var taxtotal_invoice = parseFloat(invoiceRecord.getValue("taxtotal")) * parseFloat(exchange_global);
 
     //Percepciones solo aplican a monto sin impuestos, el total_invoice, taxtotal_invoice en el aftersubmit no es correcto, revisar o calcular manualmente
 
@@ -714,6 +720,8 @@ function logicaAutoPercepciones(invoiceRecord, numLines, CodeCountry) {
 
         invoiceRecord.setSublistValue('item', 'quantity', numLines, 1);
         invoiceRecord.setSublistValue('item', 'rate', numLines, parseFloat(retencion));
+        //invoiceRecord.setSublistValue('item', 'amount', numLines, parseFloat(retencion));
+
         invoiceRecord.setSublistValue('item', 'taxcode', numLines, tax_code);
         invoiceRecord.setSublistValue('item', 'custcol_lmry_ar_perception_percentage', numLines, parseFloat(tax_rate));
         invoiceRecord.setSublistValue('item', 'custcol_lmry_ar_item_tributo', numLines, true);
