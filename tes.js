@@ -1,1 +1,8 @@
-{"id":"4606147","wht":{"ica":{},"iva":{},"fte":{},"cree":{}},"sumSubtotal":1200000,"sumTotal":1428000,"sumTaxtotal":228000,"recordtype":"vendorcredit","variable":"","total":1428000,"taxtotal":228000,"subtotal":1200000,"discountTotal":null,"exchangeRate":1,"items":{"14175748":{"id":"475653","subtotal":1200000,"total":1428000,"taxtotal":228000,"lineuniquekey":"14175748","itemType":"InvtPart","account":"134","factor":{}}},"expense":{},"discountRate":1,"relatedRecords":[]}
+search.lookupFields({ type: search.Type.SUBSIDIARY, id: subsidiari, columns: ['tranprefix'] });
+
+
+var subsidiaryCountry = search.lookupFields({
+    type: search.Type.SUBSIDIARY,
+    id: "6",
+    columns: ['country']
+}).country[0].text;
