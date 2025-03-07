@@ -62,8 +62,6 @@ define(['N/suiteAppInfo', 'N/config', 'N/log', 'N/ui/serverWidget', 'N/record', 
 
         var subsidiary = getSubsidiaryID(scriptContext);
         var countryName = getSubsidiaryCountryName(subsidiary);
-        log.error("subsidiary",subsidiary)
-        log.error("countryName",countryName)
         if (allLicenses[subsidiary] != null && allLicenses[subsidiary] != '') {
           licenses = allLicenses[subsidiary];
         } else {
@@ -212,13 +210,10 @@ define(['N/suiteAppInfo', 'N/config', 'N/log', 'N/ui/serverWidget', 'N/record', 
               }
             }
           }
-        }
-
-        
+        }       
               
       } catch (error) {
         log.error("[beforeload] error",error)
-        log.error("[beforeload] error stack",error.stack)
         library.sendemail(' [ beforeLoad ] ' + error, LMRY_script);
       }
     }
