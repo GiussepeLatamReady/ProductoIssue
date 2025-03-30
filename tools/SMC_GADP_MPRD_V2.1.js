@@ -41,12 +41,12 @@ define([
 
             try {
 
-                const deleteRecor = deleteRecord();
-                //let transactionsIds = getTransactionIDs();
+                //const deleteRecor = deleteRecord();
+                let transactionsIds = getTransactionIDs();
                 //transactionsIds = idsWithoutPedimentos(transactionsIds);
-                //log.error("Cantidad de transacciones:", transactionsIds.length)
-                return deleteRecor;
-                //return transactionsIds;
+                log.error("Cantidad de transacciones:", transactionsIds.length)
+                //return deleteRecor;
+                return transactionsIds;
             } catch (error) {
 
                 log.error("getinputdata error", error)
@@ -91,7 +91,7 @@ define([
                         value: context.value
                     });
                 } else {
-                    
+                    /*
                     record.delete({
                         type:"customrecord_lmry_mx_pedimento_details",
                         id: transactionID
@@ -103,8 +103,8 @@ define([
                             transactionID: transactionID
                         }
                     });
-
-                    /*
+                    */
+                    
                     //if (!existPedimento(transactionID)) {
                     const recordDetail = getTransactionDetails(transactionID);
                     //log.error("recordDetail", recordDetail)
@@ -121,7 +121,7 @@ define([
                     
 
                     //}
-                    */
+                    
                 }
             } catch (error) {
                 log.error("error map transaction", transactionID);
@@ -190,13 +190,16 @@ define([
         const summarize = (context) => {
             try {
 
+
+                /*
                 let arrRecordsDetail = new Array();
                 context.output.iterator().each(function (key, value) {
                     arrRecordsDetail.push(value);
                     return true;
                 });
                 log.error("summarize array",arrRecordsDetail.length);
-                /*
+                */
+                
                 //setConfiguration();
                 let arrRecordsDetail = new Array();
                 context.output.iterator().each(function (key, value) {
@@ -265,7 +268,7 @@ define([
                     
                 });
 
-                let arrResult = arrRecordsDetail.filter(transaction => transaction.pedimentos == 0);
+                let arrResult = arrRecordsDetail.filter(transaction => transaction.pedimentos != 0 && transaction.pedimentos != transaction.quantity);;
                 //filter(transaction => transaction.pedimentos == 0); // No tienen pedimentos
                 //filter(transaction => transaction.pedimentos != 0 && transaction.pedimentos != transaction.quantity); // inconsistencias
                 arrResult.forEach(transaction => {
@@ -286,7 +289,7 @@ define([
                 //log.error("cantiadad filnal de transaccion que tiene tax result", uniqueTransactions.length)
 
                 //log.debug("arrTransactions", arrTransactions)
-                */
+                
                 log.debug("end", "end")
             } catch (error) {
                 log.error("error Summarize", error);
