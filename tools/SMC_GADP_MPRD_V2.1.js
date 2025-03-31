@@ -227,22 +227,40 @@ define([
 
                 const jsonPedimentos = getPedimentos();
                 const jsonData = getData();
-
-                log.error("jsonData",jsonData)
+                const addPedimentos = []
+                //log.error("jsonData",jsonData)
                 arrRecordsDetail.forEach(transaction => {
                     const { id, itemID, locationID ,location,item} = transaction;
                     const key = id + "-" + locationID + "-" + itemID;
                     const keyData = location.trim() + "|" + item.trim();
-                    if (jsonPedimentos[key]) {
-                        transaction.pedimentos = jsonPedimentos[key].quantity || 0;
-                        transaction.internalidPedimento = jsonPedimentos[key].internalid;
+                    if (jsonPedimentos[key] && jsonPedimentos[key].length) {
+                        log.error("jsonPedimentos[key] 2",jsonPedimentos[key])
+                        transaction.pedimentos = jsonPedimentos[key][0].quantity || 0;
+                        transaction.internalidPedimento = jsonPedimentos[key][0].internalid;
 
-                        transaction.correlativo = jsonPedimentos[key].correlativo;
-                        transaction.date = jsonPedimentos[key].date;
-                        transaction.aduana = jsonPedimentos[key].aduana;
-                        transaction.referenceSource = jsonPedimentos[key].referenceSource;
-                        transaction.trandate = jsonPedimentos[key].trandate;
-                        transaction.ei = jsonPedimentos[key].ei;
+                        transaction.correlativo = jsonPedimentos[key][0].correlativo;
+                        transaction.date = jsonPedimentos[key][0].date;
+                        transaction.aduana = jsonPedimentos[key][0].aduana;
+                        transaction.referenceSource = jsonPedimentos[key][0].referenceSource;
+                        transaction.trandate = jsonPedimentos[key][0].trandate;
+                        transaction.ei = jsonPedimentos[key][0].ei;
+
+                        if (jsonPedimentos[key].length>1 ) {
+                            for (let i = 1; i < jsonPedimentos[key].length; i++) {
+                                const addline = JSON.parse(JSON.stringify(transaction))
+                                addline.pedimentos = jsonPedimentos[key][i].quantity || 0;
+                                addline.internalidPedimento = jsonPedimentos[key][i].internalid;
+    
+                                addline.correlativo = jsonPedimentos[key][i].correlativo;
+                                addline.date = jsonPedimentos[key][i].date;
+                                addline.aduana = jsonPedimentos[key][i].aduana;
+                                addline.referenceSource = jsonPedimentos[key][i].referenceSource;
+                                addline.trandate = jsonPedimentos[key][i].trandate;
+                                addline.ei = jsonPedimentos[key][i].ei;
+                                addPedimentos.push(addline)
+                            }
+                        }
+                        
                     } else {
                         transaction.pedimentos = 0;
                         transaction.internalidPedimento = "";
@@ -267,14 +285,35 @@ define([
                     }
                     
                 });
+                
+                arrRecordsDetail = arrRecordsDetail.concat(addPedimentos);
+                arrRecordsDetail.sort((a, b) => Number(a.id) - Number(b.id));
 
-                let arrResult = arrRecordsDetail.filter(transaction => transaction.pedimentos != 0 && transaction.pedimentos != transaction.quantity);;
+                const sumPedimentos = {};
+                arrRecordsDetail.forEach(transaction => {
+                    const { id, itemID, locationID} = transaction;
+                    const key = id + "-" + locationID + "-" + itemID;
+                    if (!sumPedimentos[key]) {
+                        sumPedimentos[key] = {}
+                        sumPedimentos[key].pedimentos = 0;
+                        sumPedimentos[key].quantity = transaction.quantity;
+                    }
+
+                    sumPedimentos[key].pedimentos += transaction.pedimentos;
+                    //sumPedimentos[key].quantity = transaction.quantity;
+                });
+                let arrResult = arrRecordsDetail.filter(transaction => {
+                    const { id, itemID, locationID} = transaction;
+                    const key = id + "-" + locationID + "-" + itemID;
+                    const line = sumPedimentos[key];
+                    return line.pedimentos != 0 && line.pedimentos != line.quantity
+                });
                 //filter(transaction => transaction.pedimentos == 0); // No tienen pedimentos
                 //filter(transaction => transaction.pedimentos != 0 && transaction.pedimentos != transaction.quantity); // inconsistencias
                 arrResult.forEach(transaction => {
                     delete transaction.locationID;
                     delete transaction.itemID;
-                });
+                }); 
 
                 arrResult = arrResult.map(transaction => Object.values(transaction).join("\t"));
 
@@ -329,11 +368,11 @@ define([
                         ["formulatext: CASE WHEN {transferlocation} = {location}  THEN 0 ELSE 1 END", "is", "1"],
                         /*
                         "AND",
-                        ["item", "anyof", "153394"],
+                        ["item", "anyof", "7081"],
                         "AND",
-                        ["location", "anyof", "21"]
-                        */
+                        ["location", "anyof", "19"]
                         
+                        */
                     ],
                 columns:
                     [
@@ -389,18 +428,20 @@ define([
                         const locationID = result.getValue(result.columns[2]);
                         const transactionID = result.getValue(result.columns[3]);
                         const key = transactionID + "-" + locationID + "-" + itemID;
+                        const unitPedimento = {}
                         if (!jsonPedimentos[key]) {
-                            jsonPedimentos[key] = {}
-                            jsonPedimentos[key].quantity = 0;
+                            jsonPedimentos[key] = []
                         }
-                        jsonPedimentos[key].quantity += parseFloat(result.getValue(result.columns[0]));
-                        jsonPedimentos[key].internalid = result.getValue(result.columns[4])|| "";
-                        jsonPedimentos[key].correlativo = result.getValue(result.columns[5]) || "";
-                        jsonPedimentos[key].date = result.getValue(result.columns[6]) || "";
-                        jsonPedimentos[key].aduana = result.getText(result.columns[7]) || "";
-                        jsonPedimentos[key].referenceSource = result.getValue(result.columns[8]) || "";
-                        jsonPedimentos[key].trandate = result.getValue(result.columns[9]) || "";
-                        jsonPedimentos[key].ei = isValid(result.getValue(result.columns[10]));
+                        unitPedimento.quantity = parseFloat(result.getValue(result.columns[0]));
+                        unitPedimento.internalid = result.getValue(result.columns[4])|| "";
+                        unitPedimento.correlativo = result.getValue(result.columns[5]) || "";
+                        unitPedimento.date = result.getValue(result.columns[6]) || "";
+                        unitPedimento.aduana = result.getText(result.columns[7]) || "";
+                        unitPedimento.referenceSource = result.getValue(result.columns[8]) || "";
+                        unitPedimento.trandate = result.getValue(result.columns[9]) || "";
+                        unitPedimento.ei = isValid(result.getValue(result.columns[10]));
+
+                        jsonPedimentos[key].push(unitPedimento);
                     });
                 });
             }
@@ -480,11 +521,11 @@ define([
                         ["internalid", "anyof", id],
                         /*
                         "AND",
-                        ["item", "anyof", "153394"],
+                        ["item", "anyof", "7081"],
                         "AND",
-                        ["location", "anyof", "21"]
-                        */
+                        ["location", "anyof", "19"]
                         
+                        */
                     ],
                 columns:
                     [
