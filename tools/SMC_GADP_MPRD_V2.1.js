@@ -303,18 +303,40 @@ define([
                     sumPedimentos[key].pedimentos += transaction.pedimentos;
                     //sumPedimentos[key].quantity = transaction.quantity;
                 });
-                let arrResult = addPedimentos.filter(transaction => {
+
+                
+                let arrResult = arrRecordsDetail.filter(transaction => {
                     const { id, itemID, locationID} = transaction;
                     const key = id + "-" + locationID + "-" + itemID;
                     const line = sumPedimentos[key];
-                    return line.pedimentos != 0 && line.pedimentos != line.quantity
+                    return line.pedimentos == 0;
                 });
+                
+                //arrResult = arrResult.filter(transaction => transaction.quantity != 0);
+                //let arrResult = arrRecordsDetail;
                 //filter(transaction => transaction.pedimentos == 0); // No tienen pedimentos
                 //filter(transaction => transaction.pedimentos != 0 && transaction.pedimentos != transaction.quantity); // inconsistencias
                 arrResult.forEach(transaction => {
                     delete transaction.locationID;
                     delete transaction.itemID;
                 });
+                /*
+                arrResult.forEach(transaction => {
+                    record.submitFields({
+                        type: "customrecord_lmry_mx_pedimento_details",
+                        id: transaction.internalidPedimento,
+                        values: {
+                            custrecord_lmry_mx_ped_quantity: transaction.quantity
+                        },
+                        options: {
+                            enableSourcing: false,
+                            ignoreMandatoryFields: true,
+                            disableTriggers: true
+                        }
+                    });
+                });
+                */
+                /*
                 const deleteped = []
                 arrResult.forEach(transaction => {
                     record.delete({
@@ -324,6 +346,7 @@ define([
                     deleteped.push(transaction.internalidPedimento)
                 });
                 log.error("deleteped cant",deleteped.length)
+                */
                 arrResult = arrResult.map(transaction => Object.values(transaction).join("\t"));
 
 
@@ -375,9 +398,11 @@ define([
                         ["formulatext: CASE WHEN {recordType} = 'itemreceipt' AND {quantity} < 0 THEN 0 ELSE 1 END", "is", "1"],
                         "AND",
                         ["formulatext: CASE WHEN {transferlocation} = {location}  THEN 0 ELSE 1 END", "is", "1"],
+                        "AND",
+                        ["item", "anyof", "7407"]
                         /*
                         "AND",
-                        ["item", "anyof", "7081"],
+                        ["item", "anyof", "7407"],
                         "AND",
                         ["location", "anyof", "19"]
                         
@@ -528,6 +553,8 @@ define([
                         ["formulatext: CASE WHEN {transferlocation} = {location}  THEN 0 ELSE 1 END", "is", "1"],
                         "AND",
                         ["internalid", "anyof", id],
+                        "AND",
+                        ["item", "anyof", "7407"]
                         /*
                         "AND",
                         ["item", "anyof", "7081"],
