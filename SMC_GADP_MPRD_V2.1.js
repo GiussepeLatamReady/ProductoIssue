@@ -29,7 +29,9 @@ define([
 
             try {
 
-                let transactions = loadcsv();
+                let transactions = getTransaction();
+                log.error("transactions",transactions)
+                log.error("cantidad de transacciones",transactions.length)
                 //loadcsv();
                 return transactions;
             } catch (error) {
@@ -51,16 +53,18 @@ define([
                 } else {
                     
                     let objTransaction = getInfoData(transaction);
+                    log.error("objTransaction",objTransaction)
                     let csvContent = generateFile(objTransaction,transaction.internalid)
-                    //log.error("csvContent",csvContent)
+                    log.error("csvContent",csvContent)
                     context.write({
-                        key: transaction.index,
+                        key: transaction.internalid,
                         value: csvContent
                     });
                 }
             } catch (error) {
                 log.error("error map transaction", transaction);
                 log.error("error map", error);
+                log.error("error map stack", error.stack);
                 context.write({
                     key: context.key,
                     value: ["isError " + transaction.internalid + " - " + transaction.transaction, error.message]
@@ -128,10 +132,11 @@ define([
                 let arrTransactions = new Array();
 
                 context.output.iterator().each(function (key, value) {
+                    log.error("value",value)
                     arrTransactions.push(value);
                     return true;
                 });
-
+                log.error("arrTransactions",arrTransactions)
                 const title = "index,Invoice,Tranid,amount,Memo,Tranid,amount,Memo,reclasificacion"+ '\n'
                 let fileContent = arrTransactions.map(transaction => transaction + '\n').join('');
                 //log.error("fileContent",fileContent)
@@ -208,7 +213,7 @@ define([
         }
 
         const getInfoData = (transaction) => {
-            //log.error("transaction", transaction)
+            //log.error("transaction getInfoData", transaction)
             let objTransaction = {};
 
             objTransaction[transaction.internalid] = {
@@ -242,8 +247,8 @@ define([
                 objTransaction[internalid].apply.push(ObjApply)
                 return true;
             })
-            
-            let payment = objTransaction[transaction.internalid].apply.find(tx => tx.type === "Payment").internalid;
+            let payment = objTransaction[transaction.internalid].apply.find(tx => tx.type === "Payment");
+            if (payment) payment = payment.internalid;
             let taxResult = [];
 
             if (payment) {
@@ -278,10 +283,13 @@ define([
         const generateFile = (objTransaction,internalid) => {
 
             const transaction = objTransaction[internalid];
+            log.error("transaction",transaction)
             const {index,tranid_new,apply,statusTaxResult} = transaction;
 
             let payment = apply.find(tx => tx.type === "Payment");
             let creditMemo = apply.find(tx => tx.type === "Credit Memo");
+            log.error("payment",payment)
+            log.error("creditMemo",creditMemo)
             if (!payment) {
                 payment = {}
                 payment.tranid = "No tiene pago";
@@ -297,6 +305,48 @@ define([
            return `${index},${tranid_new},${payment.tranid},${payment.amount},${payment.memo},${creditMemo.tranid},${creditMemo.amount},${creditMemo.memo},${statusTaxResult}`;
         }
 
+        const getTransaction = () => {
+            let jsonData = {};
+            var transactionSearchObj = search.create({
+                type: "invoice",
+                filters:
+                    [
+                        ["subsidiary", "anyof", "61"],
+                        "AND",
+                        ["mainline", "is", "T"],
+                        "AND",
+                        [
+                            ["postingperiod", "abs", "1088"],
+                            "OR",
+                            ["postingperiod", "abs", "1089"],
+                            "OR",
+                            ["postingperiod", "abs", "1090"]
+                        ]
+                        
+                    ],
+                columns:
+                    [
+                        "internalid"
+                    ]
+            });
+            log.error("transactionSearchObj",transactionSearchObj)
+            let pageData = transactionSearchObj.runPaged({ pageSize: 1000 });
+            if (pageData) {
+                pageData.pageRanges.forEach(function (pageRange) {
+                    let page = pageData.fetch({ index: pageRange.index });
+                    page.data.forEach(function (result) {
+                        let id = result.getValue(result.columns[0]);
+                        jsonData[id] = true;
+                    });
+                });
+            }
 
+            return Object.keys(jsonData).map(id => {
+                const transaction = {
+                    internalid:id
+                }
+                return transaction;
+            });
+        }
         return { getInputData, map, summarize };
     });
