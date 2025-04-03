@@ -16,7 +16,7 @@ define([
     'N/task'
 ],
     (log, search, redirect, runtime, serverWidget, url, task) => {
-        const CLIENT_SCRIPT_PATH = "./CO_Library_Mensual/LMRY_CO_Header_WHT_calculation_CLNT_V2.1.js";
+        const CLIENT_SCRIPT_PATH = "./SMC_PEDIMENTOS_VALIDATION_CLNT_V2.1.js";
 
         const onRequest = (context) => {
             const scriptContext = {
@@ -39,9 +39,9 @@ define([
             try {
 
                 const status = Number(params.status);
-                const {form,active} = handler.createForm();
+                const { form, active } = handler.createForm();
                 if (active) {
-                
+
                     status ? handler.setFormValues() : handler.loadFormValues();
                     handler.createTransactionSublist();
                     if (status) handler.loadTransactionSublist();
@@ -58,21 +58,11 @@ define([
         const processPOSTRequest = (handler, { params, scriptId, deploymentId }) => {
             try {
                 const status = Number(params.custpage_status);
-                if (!status) {
-                    redirect.toSuitelet({
-                        scriptId,
-                        deploymentId,
-                        parameters: handler.getRedirectParams()
-                    });
-
-                } else {
-                    const parameters = {
-                        state: params.custpage_log_id,
-                        user: runtime.getCurrentUser().id
-                    };
-                    handler.runMapReduce(parameters);
-                    handler.toLogSuitelet();
-                }
+                redirect.toSuitelet({
+                    scriptId,
+                    deploymentId,
+                    parameters: handler.getRedirectParams()
+                });
             } catch (err) {
                 log.error("[ onRequest - POST ]", err);
             }
@@ -82,8 +72,6 @@ define([
             constructor(options) {
                 this.params = options.params || {};
                 this.method = options.method;
-                this.FEAT_SUBS = this.isValid(runtime.isFeatureInEffect({ feature: 'SUBSIDIARIES' }));
-                this.FEAT_CALENDAR = this.isValid(runtime.isFeatureInEffect({ feature: 'MULTIPLECALENDARS' }));
                 let language = runtime.getCurrentScript().getParameter({ name: "LANGUAGE" }).substring(0, 2);
                 language = language === "es" ? language : "en";
                 this.translations = this.getTranslations(language);
@@ -116,15 +104,15 @@ define([
                 this.setupFormWithSubsidiaries();
                 this.addFormButtons();
 
-                return {form: this.form , active:true};
+                return { form: this.form, active: true };
             }
 
 
             setupFormWithSubsidiaries() {
 
                 this.addGroup('mainGroup', this.translations.LMRY_PRIMARY_INFO);
-                this.addSelectField('custpage_transaction', "Articulos de inventario", 'mainGroup').isMandatory();
-            
+                //this.addSelectField('custpage_transaction', "Articulos de inventario", 'mainGroup').isMandatory();
+                this.addCustomField('custpage_transaction', serverWidget.FieldType.TEXT, "Internalid de la transacción", 'mainGroup').setHelpText({ help: 'custpage_transaction' });
                 //this.addSelectField('custpage_locations', "Locaciones", 'mainGroup').isMandatory();
 
 
@@ -208,12 +196,12 @@ define([
 
             areThereSubsidiaries() {
                 let anySubsidiaryActive = false;
-                
-               
+
+
                 if (this.FEAT_SUBS) {
                     this.subsidiaries = this.getSubsidiaries();
-            
-                    
+
+
                     this.subsidiaries.forEach(subsidiary => {
                         subsidiary.active = true;
                         if (subsidiary.active) {
@@ -221,7 +209,7 @@ define([
                         }
                     });
                 } else {
-                
+
                     const licenses = LibraryMail.getLicenses(1);
                     const isAuthorized = LibraryMail.getAuthorization(26, licenses);
                     this.subsidiaries = [{
@@ -231,10 +219,10 @@ define([
                     }];
                     anySubsidiaryActive = isAuthorized;
                 }
-            
+
                 return anySubsidiaryActive;
             }
-            
+
 
 
             getSubsidiaries() {
@@ -271,25 +259,36 @@ define([
                 });
 
                 this.sublist_ped = this.form.addSublist({
-                    id: 'custpage_results_list',
+                    id: 'custpage_results_list_ped',
                     label: "Registros de detalles de pedimentos",
                     tab: 'pedimentos_tab',
                     type: serverWidget.SublistType.LIST
                 });
 
-                
+
                 const fields = [
                     { id: 'tranid', label: "Transacción", type: serverWidget.FieldType.TEXT },
                     { id: 'type_transaction', label: "Tipo de transaccion", type: serverWidget.FieldType.TEXT },
                     { id: 'lbl_item', label: "Articulo", type: serverWidget.FieldType.TEXT },
                     { id: 'lbl_location', label: "Locación", type: serverWidget.FieldType.TEXT },
                     { id: 'quantity', label: "Cantidad en la transaccion", type: serverWidget.FieldType.TEXT },
-                    { id: 'quantity_ped', label: "Cantidad en el registro de pedimentos", type: serverWidget.FieldType.TEXT }
+                    { id: 'quantity_ped', label: "Cantidad en el registro de pedimentos", type: serverWidget.FieldType.TEXT },
+                    { id: 'observation', label: "Observacion", type: serverWidget.FieldType.TEXT }
+                ];
+                const fields_ped = [
+                    { id: 'tranid_p', label: "Transacción", type: serverWidget.FieldType.TEXT },
+                    { id: 'correlativo_p', label: "N° Pedimento", type: serverWidget.FieldType.TEXT },
+                    { id: 'lbl_item_p', label: "Articulo", type: serverWidget.FieldType.TEXT },
+                    { id: 'lbl_location_p', label: "Locación", type: serverWidget.FieldType.TEXT },
+                    { id: 'quantity_ped_p', label: "Cantidad en el registro de pedimentos", type: serverWidget.FieldType.TEXT },
+                    { id: 'observation_p', label: "Observacion", type: serverWidget.FieldType.TEXT }
                 ];
 
 
                 fields.forEach(fieldInfo => {
                     this.sublist.addField(fieldInfo);
+                });
+                fields_ped.forEach(fieldInfo => {
                     this.sublist_ped.addField(fieldInfo);
                 });
 
@@ -313,11 +312,11 @@ define([
 
                 form.updateDefaultValues({
                     custpage_status: '1',
-                    custpage_transaction: transactionID
+                    custpage_transaction: this.getTranid(transactionID)
                 });
             }
 
-            fillItems(){
+            fillItems() {
 
                 const itemsField = this.form.getField({ id: 'custpage_items' });
                 search.create({
@@ -334,13 +333,13 @@ define([
                 });
             }
 
-            fillLocations(){
+            fillLocations() {
 
                 const locationsField = this.form.getField({ id: 'custpage_locations' });
                 search.create({
                     type: search.Type.LOCATION,
                     filters: [
-                        ["subsidiary","anyof","2"]
+                        ["subsidiary", "anyof", "2"]
                     ],
                     columns: ['internalid', 'name']
                 }).run().each(result => {
@@ -351,176 +350,302 @@ define([
 
             loadTransactionSublist() {
 
+                try {
 
-                let data = this.getTransactions();
 
-                let sublist = this.form.getSublist({ id: 'custpage_results_list' });
+                    let { finalPedimentoDetail, finalTransactions } = this.getTransactions();
+                    //log.error("finalPedimentoDetail", finalPedimentoDetail);
+                    //log.error("finalTransactions", finalTransactions);
+                    let sublist = this.form.getSublist({ id: 'custpage_results_list' });
 
-                data.forEach((transaction, i) => {
-                    const { id, tranid, legalDocument, entityName, entityValue, type, recordType, amount, currency, co_reteiva, co_reteica, co_retefte, co_retecre,isReclasification } = transaction;
-                    
-                    sublist.setSublistValue({ id: 'internalidtext', line: i, value: id});
-                    const tranUrl = url.resolveRecord({ recordType, recordId: id, isEditMode: false });
-                    sublist.setSublistValue({ id: "tranid", line: i, value: `<a class="dottedlink" href="${tranUrl}" target="_blank">${tranid}</a>` });
+                    finalTransactions.forEach((transaction, i) => {
+                        const { id, type, typeID, item, location, total, recordType, pedimentos, obs } = transaction;
+                        const tranUrl = url.resolveRecord({ recordType, recordId: id, isEditMode: false });
+                        const setSublistValue = (colId, value) => sublist.setSublistValue({ id: colId, line: i, value });
+                        setSublistValue("tranid", `<a class="dottedlink" href="${tranUrl}" target="_blank">${this.getTranid(id)}</a>`);
+                        setSublistValue("type_transaction", type);
+                        setSublistValue("lbl_item", item);
+                        setSublistValue("lbl_location", location);
+                        setSublistValue("quantity", total);
+                        setSublistValue("quantity_ped", pedimentos);
+                        setSublistValue("observation", obs);
+                    });
 
-                    const entityType = ["invoice", "creditmemo"].includes(recordType) ? "customer" : "vendor";
-                    const tranUrlEntity = url.resolveRecord({ recordType: entityType, recordId: entityValue, isEditMode: false });
-                    sublist.setSublistValue({ id: "entity", line: i, value: `<a class="dottedlink" href="${tranUrlEntity}" target="_blank">${entityName}</a>` });
+                    let sublist_ped = this.form.getSublist({ id: 'custpage_results_list_ped' });
 
-                    sublist.setSublistValue({ id: "reteiva", line: i, value: co_reteiva});
-                    sublist.setSublistValue({ id: "reteica", line: i, value: co_reteica});
-                    sublist.setSublistValue({ id: "retefte", line: i, value: co_retefte});
-                    sublist.setSublistValue({ id: "retecre", line: i, value: co_retecre});
-                    
-                    const setSublistValue = (colId, value) => sublist.setSublistValue({ id: colId, line: i, value });
-                    setSublistValue("type_transaction", type);
-                    setSublistValue("legal_document_type", legalDocument);
-                    setSublistValue("currency", currency);
-                    setSublistValue("total_amt", Number(amount).toFixed(2));
-                    setSublistValue("reclasification", isReclasification);
-                    
-                })
+                    finalPedimentoDetail.forEach((transaction, i) => {
+                        const { internalid, correlativo, quantity, item, location, total, recordType, pedimentos, obs } = transaction;
+                        const tranUrl = url.resolveRecord({ recordType: "customrecord_lmry_mx_pedimento_details", recordId: internalid, isEditMode: false });
+                        const setSublistValue = (colId, value) => sublist_ped.setSublistValue({ id: colId, line: i, value });
+                        setSublistValue("tranid_p", `<a class="dottedlink" href="${tranUrl}" target="_blank">${internalid}</a>`);
+                        setSublistValue("correlativo_p", correlativo);
+                        setSublistValue("lbl_item_p", item);
+                        setSublistValue("lbl_location_p", location);
+                        //setSublistValue("quantity", total);
+                        setSublistValue("quantity_ped_p", quantity);
+                        setSublistValue("observation_p", obs);
+                    });
 
-                if (data.length) {
-                    sublist.label = `${sublist.label} (${data.length})`;
+                    if (finalTransactions.length) {
+                        sublist.label = `${sublist.label} (${finalTransactions.length})`;
+                    }
+                    if (finalPedimentoDetail.length) {
+                        sublist_ped.label = `${sublist_ped.label} (${finalPedimentoDetail.length})`;
+                    }
+                } catch (error) {
+                    log.error("error load", error)
                 }
-
             }
 
             getTransactions() {
+                try {
 
-                const jsonITems = {};
-                let {
-                    transactionID
-                } = this.params;
-                search.create({
-                    type: "transaction",
-                    filters:
-                        [
-                            ["internalid", "anyof", transactionID]
-                        ],
-                    columns:
-                        [
-                            search.createColumn({
-                                name: "item",
-                                label: "Latam - MX Pedimento Item"
-                            }),
-                            search.createColumn({
-                                name: "location",
-                                label: "Latam - MX Pedimento Location"
-                            })
-                        ]
-                }).run().each(result => {
 
-                    const item = result.getValue(result.columns[0]);
-                    const location = result.getValue(result.columns[1]);
-                    jsonITems[item] = {
-                        item,
-                        location
-                    };
-                    return true;
-                });
+                    const jsonITems = {};
+                    let {
+                        transactionID
+                    } = this.params;
 
-                const transactions = [];
 
-                const sumTransactions = {};
 
-                const locations = Object.keys(jsonITems).map(itemID =>jsonITems[itemID].location);
-                search.create({
-                    type: "transaction",
-                    settings: [{ "name": "consolidationtype", "value": "ACCTTYPE" }],
-                    filters:
-                        [
-                            ["subsidiary", "anyof", "2"],
-                            "AND",
-                            ["item.custitem_lmry_mx_pediment", "is", "T"],
-                            "AND",
-                            ["type","anyof","InvAdjst","InvCount","InvDistr","StatChng","InvTrnfr","InvWksht","ItemShip","ItemRcpt","WorkOrd"],
-                            "AND",
-                            ["formulatext: CASE WHEN {recordType} = 'itemreceipt' AND {quantity}< 0 THEN 0 ELSE 1 END", "is", "1"],
-                            "AND",
-                            ["formulatext: CASE WHEN {transferlocation} = {location}  THEN 0 ELSE 1 END", "is", "1"],
-                            "AND",
-                            ["item", "anyof", Object.keys(jsonITems)],
-                            "AND",
-                            ["location", "anyof", locations]
-                            /*
-                            "AND",
-                            ["item", "anyof", "7081"],
-                            "AND",
-                            ["location", "anyof", "19"]
-                            
-                            */
-                        ],
-                    columns:
-                        [
-                            search.createColumn({
-                                name: "internalid",
-                                summary: "GROUP",
-                                label: "Internal ID"
-                            }),
-                            search.createColumn({
-                                name: "type",
-                                summary: "GROUP",
-                                label: "Type"
-                            }),
-                            search.createColumn({
-                                name: "subsidiary",
-                                summary: "GROUP",
-                                label: "Latam - MX Subsidiary"
-                            }),
-                            search.createColumn({
-                                name: "item",
-                                summary: "GROUP",
-                                label: "Latam - MX Pedimento Item"
-                            }),
-                            search.createColumn({
-                                name: "formulanumeric",
-                                summary: "SUM",
-                                formula: "CASE WHEN {recordType} = 'itemfulfillment' THEN -{inventoryDetail.quantity} ELSE {inventoryDetail.quantity} END",
-                                label: "Formula (Numeric)"
-                            }),
-                            search.createColumn({
-                                name: "location",
-                                summary: "GROUP",
-                                label: "Latam - MX Pedimento Location"
-                            })
-                        ]
-                }).run().each(result => {
-                    const { getValue, getText, columns } = result;
-                    const gv = (i) => getValue(columns[i]);
-                    const gt = (i) => getText(columns[i]);
-                    const transaction = {
-                        id: gv(0),
-                        type: gt(1),
-                        subsidiary: gt(2),
-                        item: gt(3),
-                        quantity: Number(gv(4)),
-                        location: gt(5),
-                        itemID: gv(3),
-                        locationID: gv(5)
-                        //pedimentos: existPedimento(id,gv(3),gv(5))
+                    search.create({
+                        type: "transaction",
+                        filters:
+                            [
+                                ["internalid", "anyof", transactionID]
+                            ],
+                        columns:
+                            [
+                                search.createColumn({
+                                    name: "item",
+                                    label: "Latam - MX Pedimento Item"
+                                }),
+                                search.createColumn({
+                                    name: "location",
+                                    label: "Latam - MX Pedimento Location"
+                                })
+                            ]
+                    }).run().each(result => {
+
+                        const item = result.getValue(result.columns[0]);
+                        const location = result.getValue(result.columns[1]);
+                        jsonITems[item] = {
+                            item,
+                            location
+                        };
+                        return true;
+                    });
+                    const transactions = [];
+
+                    const sumTransactions = {};
+                    const items = Object.keys(jsonITems);
+                    log.error("items",items)
+                    let locations = Object.keys(jsonITems).map(itemID => jsonITems[itemID].location);
+
+                    locations = [...new Set(locations)]
+                    log.error("locations",locations)
+                    const transactionSearchObj = search.create({
+                        type: "transaction",
+                        settings: [{ "name": "consolidationtype", "value": "ACCTTYPE" }],
+                        filters:
+                            [
+                                ["subsidiary", "anyof", "2"],
+                                "AND",
+                                ["item.custitem_lmry_mx_pediment", "is", "T"],
+                                "AND",
+                                ["type", "anyof", "InvAdjst", "InvCount", "InvDistr", "StatChng", "InvTrnfr", "InvWksht", "ItemShip", "ItemRcpt", "WorkOrd"],
+                                "AND",
+                                ["formulatext: CASE WHEN {recordType} = 'itemreceipt' AND {quantity}< 0 THEN 0 ELSE 1 END", "is", "1"],
+                                "AND",
+                                ["formulatext: CASE WHEN {transferlocation} = {location}  THEN 0 ELSE 1 END", "is", "1"],
+                                "AND",
+                                ["item", "anyof", items],
+                                "AND",
+                                ["location", "anyof", locations]
+                                /*
+                                "AND",
+                                ["item", "anyof", "7081"],
+                                "AND",
+                                ["location", "anyof", "19"]
+                                
+                                */
+                            ],
+                        columns:
+                            [
+                                search.createColumn({
+                                    name: "internalid",
+                                    summary: "GROUP",
+                                    label: "Internal ID"
+                                }),
+                                search.createColumn({
+                                    name: "type",
+                                    summary: "GROUP",
+                                    label: "Type"
+                                }),
+                                search.createColumn({
+                                    name: "subsidiary",
+                                    summary: "GROUP",
+                                    label: "Latam - MX Subsidiary"
+                                }),
+                                search.createColumn({
+                                    name: "item",
+                                    summary: "GROUP",
+                                    label: "Latam - MX Pedimento Item"
+                                }),
+                                search.createColumn({
+                                    name: "formulanumeric",
+                                    summary: "SUM",
+                                    formula: "CASE WHEN {recordType} = 'itemfulfillment' THEN -{inventoryDetail.quantity} ELSE {inventoryDetail.quantity} END",
+                                    label: "Formula (Numeric)"
+                                }),
+                                search.createColumn({
+                                    name: "location",
+                                    summary: "GROUP",
+                                    label: "Latam - MX Pedimento Location"
+                                }),
+                                search.createColumn({
+                                    name: "formulatext",
+                                    summary: "GROUP",
+                                    formula: "{recordType}",
+                                    label: "Formula (Text)"
+                                })
+                            ]
+                    });
+                    let pageData = transactionSearchObj.runPaged({ pageSize: 1000 });
+                    if (pageData) {
+                        pageData.pageRanges.forEach(function (pageRange) {
+                            let page = pageData.fetch({ index: pageRange.index });
+                            page.data.forEach(function (result) {
+                                const { getValue, getText, columns } = result;
+                                const gv = (i) => getValue(columns[i]);
+                                const gt = (i) => getText(columns[i]);
+                                const transaction = {
+                                    id: gv(0),
+                                    type: gt(1),
+                                    subsidiary: gt(2),
+                                    item: gt(3),
+                                    quantity: Number(gv(4)),
+                                    location: gt(5),
+                                    itemID: gv(3),
+                                    locationID: gv(5),
+                                    revised: false,
+                                    typeID: gv(1),
+                                    recordType: gv(6)
+                                    //pedimentos: existPedimento(id,gv(3),gv(5))
+                                }
+                                const key = transaction.id + "-" + transaction.locationID + "-" + transaction.itemID;
+                                if (!sumTransactions[key]) sumTransactions[key] = 0;
+                                sumTransactions[key] = transaction.quantity;
+                                transactions.push(transaction);
+                            });
+                        });
                     }
-                    const key = transaction.locationID + "-" + transaction.itemID;
-                    if (!sumTransactions[key]) sumTransactions[key] = 0;
-                    sumTransactions[key] += transaction.quantity;
-                    transactions.push(transaction);
-                    return true;
-                });
-                
 
+                    const jsonPedimentos = this.getPedimentos(items, locations)
+                    /*
+                    transactions.forEach(transaction => {
+                        const { id, itemID, locationID, location, item } = transaction;
+                        const key = id + "-" + locationID + "-" + itemID;
+                        if (jsonPedimentos[key] && jsonPedimentos[key].list && jsonPedimentos[key].list.length) {
+                            transaction.pedimentos = jsonPedimentos[key].total || 0;
+                            transaction.revised = jsonPedimentos[key].total == sumTransactions[key]
+                            transaction.total = sumTransactions[key];
+                            if (!transaction.revised) {
+                                if (transaction.total > transaction.pedimentos) {
+                                    transaction.obs = `El articulo ${transaction.item} en la locacion ${transaction.location} no tiene la cantidad suficiente en el registro de pedimentos. Se recomienda revisar los registros asociados`
+                                }
+                                if (transaction.total < transaction.pedimentos) {
+                                    transaction.obs = `El articulo ${transaction.item} en la locacion ${transaction.location} a excedido la cantidad existencias en el registro de pedimentos. Debe modificar el record de pedimentoss`
+                                }
+                            }
+                        } else {
+                            transaction.pedimentos = 0;
+                            transaction.obs = "La transacción no tiene pedimentos";
+                            transaction.total = sumTransactions[key];
+                        }
+                    });
+                    */
+                    log.error("sumTransactions[key]", sumTransactions)
+                    for (let i = 0; i < transactions.length; i++) {
+                        const transaction = transactions[i];
+                        const { id, itemID, locationID, location, item } = transaction;
+                        const key = id + "-" + locationID + "-" + itemID;
+                        if (jsonPedimentos[key] && jsonPedimentos[key].list && jsonPedimentos[key].list.length) {
+                            transaction.pedimentos = jsonPedimentos[key].total || 0;
+                            transaction.revised = jsonPedimentos[key].total == sumTransactions[key]
+                            transaction.total = sumTransactions[key];
+                            //log.error("jsonPedimentos[key].total",jsonPedimentos[key].total);
+                            //log.error("sumTransactions[key]",sumTransactions[key])
+                            //log.error("key",key)
+                            if (!transaction.revised) {
+                                if (transaction.total > transaction.pedimentos) {
+                                    transaction.obs = `El articulo ${transaction.item} en la locacion ${transaction.location} no tiene la cantidad suficiente en el registro de pedimentos. Se recomienda revisar los registros asociados`
+                                }
+                                if (transaction.total < transaction.pedimentos) {
+                                    transaction.obs = `El articulo ${transaction.item} en la locacion ${transaction.location} a excedido la cantidad existencias en el registro de pedimentos.Se debe modificar el record de pedimentos relacionados`
+                                }
+                            }
+                        } else {
+                            transaction.pedimentos = 0;
+                            transaction.obs = "La transacción no tiene pedimentos";
+                            transaction.total = sumTransactions[key];
+                        }
+                    }
 
+                    const finalTransactions = transactions.filter(transaction => !transaction.revised);
+
+                    const finalPedimentoDetail = [];
+
+                    for (const key in jsonPedimentos) {
+                        const listPedimentos = jsonPedimentos[key].list;
+                        /*
+                        listPedimentos.forEach(pedimentoDetail => {
+                            if (!pedimentoDetail.reference) {
+                                pedimentoDetail.obs = "Pedimento no relacionado a una transaccion. Se recomienda eliminarla."
+                                finalPedimentoDetail.push(pedimentoDetail)
+                            }
+                        });
+                        */
+                        for (let i = 0; i < listPedimentos.length; i++) {
+                            const pedimentoDetail = listPedimentos[i];
+                            if (!pedimentoDetail.reference) {
+                                pedimentoDetail.obs = "Pedimento no relacionado a una transaccion. Se recomienda eliminarla."
+                                finalPedimentoDetail.push(pedimentoDetail)
+                            }
+                        }
+                    }
+
+                    return {
+                        finalPedimentoDetail,
+                        finalTransactions
+                    }
+                } catch (error) {
+                    log.error("error", error)
+                    log.error("error stack", error.stack)
+                    return {
+                        finalPedimentoDetail: [],
+                        finalTransactions: []
+                    }
+                }
             }
 
-            getPedimentos(items, locations){
+            getTranid(internalId) {
+                return search.lookupFields({
+                    type: 'transaction',
+                    id: internalId,
+                    columns: ['tranid']
+                }).tranid;
+            }
+
+            getPedimentos(items, locations) {
                 const jsonPedimentos = {}
                 const transactionSearchObj = search.create({
                     type: "customrecord_lmry_mx_pedimento_details",
                     filters:
                         [
-                            ["custrecord_lmry_mx_ped_item","anyof",items],
+                            ["custrecord_lmry_mx_ped_item", "anyof", items],
                             "AND",
-                            ["custrecord_lmry_mx_ped_location","anyof",locations],
+                            ["custrecord_lmry_mx_ped_location", "anyof", locations],
                         ],
                     columns:
                         [
@@ -537,7 +662,7 @@ define([
                             "custrecord_lmry_mx_ped_ei"
                         ]
                 })
-    
+
                 let pageData = transactionSearchObj.runPaged({ pageSize: 1000 });
                 if (pageData) {
                     pageData.pageRanges.forEach(function (pageRange) {
@@ -549,42 +674,48 @@ define([
                             const key = transactionID + "-" + locationID + "-" + itemID;
                             const unitPedimento = {}
                             if (!jsonPedimentos[key]) {
-                                jsonPedimentos[key] = []
+                                jsonPedimentos[key] = {};
+                                jsonPedimentos[key].list = [];
+                                jsonPedimentos[key].total = 0;
                             }
-                            
+
                             unitPedimento.quantity = parseFloat(result.getValue(result.columns[0]));
-                            unitPedimento.internalid = result.getValue(result.columns[4])|| "";
+                            unitPedimento.internalid = result.getValue(result.columns[4]) || "";
                             unitPedimento.correlativo = result.getValue(result.columns[5]) || "";
                             unitPedimento.date = result.getValue(result.columns[6]) || "";
                             unitPedimento.aduana = result.getText(result.columns[7]) || "";
                             unitPedimento.referenceSource = result.getValue(result.columns[8]) || "";
                             unitPedimento.reference = result.getValue(result.columns[3]) || "";
                             unitPedimento.trandate = result.getValue(result.columns[9]) || "";
-                            unitPedimento.ei = isValid(result.getValue(result.columns[10]));
+                            //unitPedimento.ei = this.isValid(result.getValue(result.columns[10]));
                             unitPedimento.item = result.getText(result.columns[1]);
                             unitPedimento.location = result.getText(result.columns[2]);
                             unitPedimento.revised = false;
-                            jsonPedimentos[key].push(unitPedimento);
+                            jsonPedimentos[key].total += unitPedimento.quantity;
+                            jsonPedimentos[key].list.push(unitPedimento);
                         });
                     });
                 }
                 return jsonPedimentos;
             }
 
-            getTransactionsMain(ids,jsonData) {
+            isValid(check) {
+                return check === true || check === "T" ? "T" : "F";
+            }
+            getTransactionsMain(ids, jsonData) {
 
                 let reclasificationIds = ids.filter(id => jsonData[id]);
                 let retentionIds = ids.filter(id => !jsonData[id]);
 
                 //reclasificationIds = this.getReclasificationIds(reclasificationIds)
                 return [
-                    ...this.getSearch(reclasificationIds,true),
-                    ...this.getSearch(retentionIds,false)
-                    
+                    ...this.getSearch(reclasificationIds, true),
+                    ...this.getSearch(retentionIds, false)
+
                 ];
             }
 
-            getSearch(ids,isReclasification){
+            getSearch(ids, isReclasification) {
                 if (ids.length == 0) {
                     return ids;
                 }
@@ -597,7 +728,7 @@ define([
                 ];
 
                 if (!isReclasification) {
-                    filters.push('AND',["custrecord_lmry_br_transaction.internalid", "anyof", "@NONE@"]);
+                    filters.push('AND', ["custrecord_lmry_br_transaction.internalid", "anyof", "@NONE@"]);
                 }
 
                 let columns = [];
@@ -639,26 +770,26 @@ define([
                             let transaction = {};
                             transaction.id = result.getValue(columns[0]) || " ";
                             transaction.legalDocument = result.getValue(columns[4]) || " ";
-                            transaction.entityName = result.getValue(columns[2])|| " ";
-                            transaction.entityValue = result.getValue(columns[8])|| " ";
-                            transaction.tranid = result.getValue(columns[5])|| " - ";
-                            transaction.type = result.getValue(columns[1])|| " ";
-                            transaction.recordType = result.getValue(columns[3])|| " ";
-                            transaction.amount = Math.abs(result.getValue(columns[6]))|| 0;
-                            transaction.currency = result.getValue(columns[7])|| " ";
+                            transaction.entityName = result.getValue(columns[2]) || " ";
+                            transaction.entityValue = result.getValue(columns[8]) || " ";
+                            transaction.tranid = result.getValue(columns[5]) || " - ";
+                            transaction.type = result.getValue(columns[1]) || " ";
+                            transaction.recordType = result.getValue(columns[3]) || " ";
+                            transaction.amount = Math.abs(result.getValue(columns[6])) || 0;
+                            transaction.currency = result.getValue(columns[7]) || " ";
 
                             // Se agrego las columnas de retenciones
-                            transaction.co_reteiva = result.getValue(columns[9])|| " ";
-                            transaction.co_reteica = result.getValue(columns[10])|| " ";
-                            transaction.co_retefte = result.getValue(columns[11])|| " ";
-                            transaction.co_retecre = result.getValue(columns[12])|| " ";
-                            transaction.isReclasification = isReclasification ? "T" :"F";
+                            transaction.co_reteiva = result.getValue(columns[9]) || " ";
+                            transaction.co_reteica = result.getValue(columns[10]) || " ";
+                            transaction.co_retefte = result.getValue(columns[11]) || " ";
+                            transaction.co_retecre = result.getValue(columns[12]) || " ";
+                            transaction.isReclasification = isReclasification ? "T" : "F";
                             data.push(transaction);
                         });
                     });
                 }
 
-                
+
                 return data;
             }
 
@@ -671,8 +802,8 @@ define([
                     type: 'customrecord_lmry_br_transaction',
                     filters: [
                         ['custrecord_lmry_br_transaction', 'anyof', ids],
-                        "AND", 
-                        ["custrecord_lmry_co_wht_applied","anyof","@NONE@"]
+                        "AND",
+                        ["custrecord_lmry_co_wht_applied", "anyof", "@NONE@"]
                     ],
                     columns: [
                         'custrecord_lmry_br_transaction.internalid'
@@ -689,12 +820,12 @@ define([
                         });
                     });
                 }
-                
+
                 return Object.keys(transactionIds);
-                
+
             }
 
-            getReclasificationIds(ids){
+            getReclasificationIds(ids) {
                 if (ids.length == 0) {
                     return ids;
                 }
@@ -703,8 +834,8 @@ define([
                     type: 'customrecord_lmry_br_transaction',
                     filters: [
                         ['custrecord_lmry_br_transaction', 'anyof', ids],
-                        "AND", 
-                        ["custrecord_lmry_co_wht_applied","noneof","@NONE@"]
+                        "AND",
+                        ["custrecord_lmry_co_wht_applied", "noneof", "@NONE@"]
                     ],
                     columns: [
                         'custrecord_lmry_br_transaction.internalid',
@@ -729,9 +860,9 @@ define([
                 if (correctIds.length) ids = ids.filter(id => !correctIds.includes(id));//Se retira las transacciones que han generado el tax result correctamente
                 return ids;
             }
-            
 
-            getPeriods(subsidiaryValue,initialPeriod, finalPeriod) {
+
+            getPeriods(subsidiaryValue, initialPeriod, finalPeriod) {
 
                 const periodlookup1 = search.lookupFields({
                     type: 'accountingperiod',
@@ -773,12 +904,12 @@ define([
 
                 return this.generatePeriodFormula(periodIds);
             }
-            
+
             generatePeriodFormula(idsPeriod) {
                 const periodsString = idsPeriod.map(id => `'${id}'`).join(', ');
                 return `CASE WHEN {custbody_lmry_reference_transaction.postingperiod.id} IN (${periodsString}) THEN 1 ELSE 0 END`;
             }
-            
+
             getFiscalCalendar(subsidiaryValue) {
                 let subsidiary = search.lookupFields({
                     type: search.Type.SUBSIDIARY,
@@ -791,11 +922,7 @@ define([
             getRedirectParams() {
                 let params = this.params;
                 return {
-                    subsidiary: params.custpage_subsidiary || '',
-                    whtType: params.custpage_wht_type || '',
-                    accoutingPeriod: params.custpage_ini_period || '',
-                    accoutingFinalPeriod: params.custpage_fin_period || '',
-                    typeProcess: params.custpage_wht_process || '',
+                    transactionID: params.custpage_transaction || '',
                     status: '1'
                 };
             }
@@ -900,7 +1027,7 @@ define([
                 redirect.toSuitelet({
                     scriptId: this.names.scriptid,
                     deploymentId: this.names.deployid,
-                    parameters:params
+                    parameters: params
                 });
             }
 
@@ -925,10 +1052,8 @@ define([
             }
 
 
-            isValid(bool) {
-                return (bool === "T" || bool === true);
-            }
-            setParams(parameters){
+
+            setParams(parameters) {
                 this.params = parameters;
             }
 
