@@ -172,14 +172,22 @@ define([
                     this.form.addSubmitButton({ label: this.translations.LMRY_FILTER });
                 } else {
                     this.form.addButton({
+                        id: 'btn_reload',
+                        label: "Actualizar",
+                        functionName: 'reload'
+                    });
+                    this.form.addButton({
                         id: 'btn_back',
-                        label: this.translations.LMRY_BACK,
+                        label: "Atras",
                         functionName: 'back'
                     });
                     // Deshabilitar campos si es necesario
                     this.disableFields();
+
                 }
-                this.form.addResetButton({ label: this.translations.LMRY_RESTART });
+                
+                // Deshabilitar campos si es necesario
+               
             }
 
 

@@ -48,16 +48,7 @@ define(['N/runtime',
 
         const reload = () => {
 
-            var _record = currentRecord.get();
-
-            var path = urlApi.resolveRecord({
-                recordType: _record.type,
-                recordId: _record.id,
-                isEditMode: false,
-            });
-
-            setWindowChanged(window, false);
-            window.location.href = path;
+            window.location.href = window.location.href;
 
         }
 
