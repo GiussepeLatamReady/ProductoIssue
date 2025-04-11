@@ -47,7 +47,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
         if (evento == "create" || evento == "edit") {
           // Registro actual
 
-          var transactionRecord;
+          var transactionRecord = paramContext.newRecord;
           if(isMassive){
             transactionRecord = objTransaction;
           } else { //UI
@@ -85,6 +85,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
       } catch (msg) {
         // Envio de mail con errores
         log.error('Percepciones', msg);
+        log.error('Percepciones stack', msg.stack);
         LibraryMail.sendemail('[ beforeSubmit ] ' + msg, Name_script);
       }
 
@@ -205,12 +206,15 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
          ********************************************/
         if (transaction.type.text == 'creditmemo' && transaction.createdFrom) {
            const validation = validateCreditMemoTotal(transaction,event);
+           log.error("validation",validation)
+           log.error("setupTaxSubsidiary.totalPerception",setupTaxSubsidiary.totalPerception)
            if (setupTaxSubsidiary.totalPerception) {
               transaction.validateTotalCreditMemo = validation.isTotal
+              if (!validation.isTotal) transaction.currentRecord.setValue("custbody_lmry_apply_wht_code", false);
            }
            if (!validation.itemsPerception) return true;
         }
-        /*
+        
         const invoice = {};
         if (transaction.type.text == 'creditmemo' && transaction.createdFrom) {
 
@@ -223,12 +227,12 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
           ); 
           
           invoice.items = getItems(transactionRecord);
-          invoice.totalCurrency = getTotal(invoice);
-          if (invoice.totalCurrency == transaction.totalCurrency) return true;
-          transaction.validateTotalCreditMemo = false;        
         }
 
-        */
+        
+        log.error("transaction.validateTotalCreditMemo",transaction.validateTotalCreditMemo)
+        log.error("transaction.applyWhtCode",transaction.applyWhtCode)
+        log.error("validateDocumentType(transaction)",validateDocumentType(transaction))
         if (transaction.validateTotalCreditMemo && transaction.applyWhtCode && validateDocumentType(transaction) && transaction.notSend) {
           setLinePerception("1", nationalTaxs, transaction, setupTaxSubsidiary, {},invoice);
           setLinePerception("1", contributoryClass, transaction, setupTaxSubsidiary, {},invoice);
@@ -242,19 +246,20 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
           }
           */
         } 
-        
-        
+        log.error("removePerceptionLines","Antes")
         removePerceptionLines(transaction);
+        log.error("removePerceptionLines","depues")
 
         if (transaction.type.text == 'creditmemo') updateApplyAmount(transaction);
         
         // Graba la transaccion
+        log.error("save","antes")
         transaction.currentRecord.save({
           disableTriggers: true,
           enableSourcing: false,
           ignoreMandatoryFields: true
       });
-
+      log.error("save","depues")
       } catch (errmsg) {
         log.error("Error [calculatePerception]", errmsg)
         // Envio de mail con errores
@@ -489,7 +494,9 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
       return contributoryClassList;
     }
 
-    function setLinePerception(appliesTo, recordTaxs, transaction, setupTaxSubsidiary, item) {
+    function setLinePerception(appliesTo, recordTaxs, transaction, setupTaxSubsidiary, item,invoice) {
+      log.error("setLinePerception","start")
+      log.error("recordTaxs",recordTaxs)
       if (recordTaxs.length) {
         var countValidation = 0;
         for (var i = 0; i < recordTaxs.length; i++) {         
@@ -600,10 +607,12 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
           // La alicouta de la percepcion en el credit memo debe ser igual al de factura siempre.
           var index;
           index = findLinePerception(transaction, recordTax);
+          
           if (transaction.type.text == 'creditmemo' && transaction.createdFrom) {
-            for (var lineuniquekey in invoice.items) {
+            var rowPercepction = index || numLines;
+            for (var lineuniquekey in invoice.items) { 
               var item = invoice.items[lineuniquekey];
-              if (item.line == index) {
+              if (item.line == rowPercepction) {
                 recordTax.taxRate = item.perceptionPercentage;
               }
             }
@@ -655,6 +664,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
           }
           if (index != -1) {
             // Busca la linea de percepcion a actualizar
+            log.error("perception","update")
             try {
               transaction.currentRecord.setSublistValue('item', 'rate', index, parseFloat(retention));
               transaction.currentRecord.setSublistValue('item', 'custcol_lmry_br_taxc_rsp', index, memo);
@@ -722,10 +732,12 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
                   }
                 }
               }
+              log.error("setPerception","end")
             } catch (error) {
               log.error("setLinePerception : Set rate", error);
             }
           } else {
+            log.error("perception","create")
             // Agrega una linea en blanco
             transaction.currentRecord.insertLine('item', numLines);
             index = numLines
@@ -796,10 +808,14 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
               }
             }
             numLines++;
+            log.error("setPerception","end")
           }
         };
         // (C1064) 2024.07.07 : Solo Aplica a Credit Memo
-        if (transaction.type.text == 'creditmemo' && !countValidation && setupTaxSubsidiary.totalPerception) {
+        log.error("transaction.type.text",transaction.type.text)
+        log.error("countValidation",countValidation)
+        log.error("setupTaxSubsidiary.totalPerception",setupTaxSubsidiary.totalPerception)
+        if (transaction.type.text == 'creditmemo' && countValidation && setupTaxSubsidiary.totalPerception) {
           transaction.currentRecord.setValue("custbody_lmry_apply_wht_code", false);
         }
       }
@@ -1045,7 +1061,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
       }
 
 
-      if (!isTotal) transaction.currentRecord.setValue("custbody_lmry_apply_wht_code", false);
+      
       
       return {
         isTotal:isTotal,
@@ -1211,7 +1227,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/email', 'N/format',
           transaction.amountRemoved += items[lineuniquekey].amount;
         }
       })
-      
+      log.error("deletedItems",deletedItems)
       deletedItems.sort(function (a, b) { return b - a });
       deletedItems.forEach(function (id) {
         transaction.currentRecord.removeLine({
