@@ -447,11 +447,11 @@ define([
 
                     const sumTransactions = {};
                     const items = Object.keys(jsonITems);
-                    log.error("items",items)
+                    //log.error("items",items)
                     let locations = Object.keys(jsonITems).map(itemID => jsonITems[itemID].location);
 
                     locations = [...new Set(locations)]
-                    log.error("locations",locations)
+                    //log.error("locations",locations)
                     const transactionSearchObj = search.create({
                         type: "transaction",
                         settings: [{ "name": "consolidationtype", "value": "ACCTTYPE" }],
@@ -573,7 +573,7 @@ define([
                         }
                     });
                     */
-                    log.error("sumTransactions[key]", sumTransactions)
+                    //log.error("sumTransactions[key]", sumTransactions)
                     for (let i = 0; i < transactions.length; i++) {
                         const transaction = transactions[i];
                         const { id, itemID, locationID, location, item } = transaction;
@@ -600,8 +600,8 @@ define([
                         }
                     }
 
-                    const finalTransactions = transactions.filter(transaction => !transaction.revised);
-
+                    const finalTransactions = transactions.filter(transaction => !transaction.revised && transaction.total != 0);
+                    log.error("finalTransactions",finalTransactions)
                     const finalPedimentoDetail = [];
 
                     for (const key in jsonPedimentos) {
