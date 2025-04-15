@@ -226,9 +226,12 @@ define([
 
 
                 const jsonPedimentos = getPedimentos();
+                //log.error("jsonPedimentos",jsonPedimentos)
                 const jsonData = getData();
                 const addPedimentos = []
                 //log.error("jsonData",jsonData)
+                //log.error("arrRecordsDetail",arrRecordsDetail)
+                log.error("arrRecordsDetail LENGTH",arrRecordsDetail.length)
                 arrRecordsDetail.forEach(transaction => {
                     const { id, itemID, locationID ,location,item} = transaction;
                     const key = id + "-" + locationID + "-" + itemID;
@@ -244,7 +247,7 @@ define([
                         transaction.referenceSource = jsonPedimentos[key][0].referenceSource;
                         transaction.trandate = jsonPedimentos[key][0].trandate;
                         transaction.ei = jsonPedimentos[key][0].ei;
-
+                        jsonPedimentos[key][0].revised = true;
                         if (jsonPedimentos[key].length>1 ) {
                             for (let i = 1; i < jsonPedimentos[key].length; i++) {
                                 const addline = JSON.parse(JSON.stringify(transaction))
@@ -258,6 +261,7 @@ define([
                                 addline.trandate = jsonPedimentos[key][i].trandate;
                                 addline.ei = jsonPedimentos[key][i].ei;
                                 addPedimentos.push(addline)
+                                jsonPedimentos[key][i].revised = true;
                             }
                         }
                         
@@ -268,7 +272,7 @@ define([
                             //log.error("keyData",keyData)
                             //log.error("jsonData[keyData]",jsonData[keyData])
                             transaction.correlativo = jsonData[keyData].numero || "";
-                            transaction.date = jsonData[keyData].trandate || "";
+                            transaction.date = jsonData[keyData].date || "";
                             transaction.aduana = jsonData[keyData].aduana || "";
                             transaction.referenceSource = "";
                             transaction.trandate = "";
@@ -309,17 +313,48 @@ define([
                     const { id, itemID, locationID} = transaction;
                     const key = id + "-" + locationID + "-" + itemID;
                     const line = sumPedimentos[key];
-                    return line.pedimentos == 0;
+                    return line.pedimentos != transaction.quantity
                 });
                 
+               /*
+                let pedimentosNotAsign = Object.values(jsonPedimentos).flat();
+                log.error("pedimentosNotAsign LENGTH",pedimentosNotAsign.length)
+                pedimentosNotAsign = pedimentosNotAsign.filter(pedimento => pedimento.revised == false);
+                pedimentosNotAsign = pedimentosNotAsign.map(pedimento => {
+                    const objPedimento = {
+                        id: pedimento.reference,
+                        type: "",
+                        subsidiary: "",
+                        item: pedimento.item,
+                        quantity: "",
+                        location: pedimento.location,
+                        pedimentos: pedimento.quantity,
+                        internalidPedimento: pedimento.internalid,
+                        correlativo : pedimento.numero || "",
+                        date : pedimento.trandate || "",
+                        aduana : pedimento.aduana || "",
+                        referenceSource : "",
+                        trandate : "",
+                        ei : "F"
+                    }
+                    return objPedimento;
+                } )
+                */
                 //arrResult = arrResult.filter(transaction => transaction.quantity != 0);
                 //let arrResult = arrRecordsDetail;
                 //filter(transaction => transaction.pedimentos == 0); // No tienen pedimentos
-                //filter(transaction => transaction.pedimentos != 0 && transaction.pedimentos != transaction.quantity); // inconsistencias
+                arrResult = arrResult.filter(transaction => transaction.pedimentos != 0 && transaction.pedimentos != transaction.quantity); // inconsistencias
+                
                 arrResult.forEach(transaction => {
                     delete transaction.locationID;
                     delete transaction.itemID;
                 });
+                
+
+
+
+
+                
                 /*
                 arrResult.forEach(transaction => {
                     record.submitFields({
@@ -398,8 +433,6 @@ define([
                         ["formulatext: CASE WHEN {recordType} = 'itemreceipt' AND {quantity} < 0 THEN 0 ELSE 1 END", "is", "1"],
                         "AND",
                         ["formulatext: CASE WHEN {transferlocation} = {location}  THEN 0 ELSE 1 END", "is", "1"],
-                        "AND",
-                        ["item", "anyof", "7407"]
                         /*
                         "AND",
                         ["item", "anyof", "7407"],
@@ -436,7 +469,9 @@ define([
             const transactionSearchObj = search.create({
                 type: "customrecord_lmry_mx_pedimento_details",
                 filters:
-                    [],
+                    [
+                        //["custrecord_lmry_mx_ped_item","anyof","7429"]
+                    ],
                 columns:
                     [
                         "custrecord_lmry_mx_ped_quantity",//0
@@ -466,15 +501,19 @@ define([
                         if (!jsonPedimentos[key]) {
                             jsonPedimentos[key] = []
                         }
+                        
                         unitPedimento.quantity = parseFloat(result.getValue(result.columns[0]));
                         unitPedimento.internalid = result.getValue(result.columns[4])|| "";
                         unitPedimento.correlativo = result.getValue(result.columns[5]) || "";
                         unitPedimento.date = result.getValue(result.columns[6]) || "";
                         unitPedimento.aduana = result.getText(result.columns[7]) || "";
                         unitPedimento.referenceSource = result.getValue(result.columns[8]) || "";
+                        unitPedimento.reference = result.getValue(result.columns[3]) || "";
                         unitPedimento.trandate = result.getValue(result.columns[9]) || "";
                         unitPedimento.ei = isValid(result.getValue(result.columns[10]));
-
+                        unitPedimento.item = result.getText(result.columns[1]);
+                        unitPedimento.location = result.getText(result.columns[2]);
+                        unitPedimento.revised = false;
                         jsonPedimentos[key].push(unitPedimento);
                     });
                 });
@@ -552,9 +591,7 @@ define([
                         "AND",
                         ["formulatext: CASE WHEN {transferlocation} = {location}  THEN 0 ELSE 1 END", "is", "1"],
                         "AND",
-                        ["internalid", "anyof", id],
-                        "AND",
-                        ["item", "anyof", "7407"]
+                        ["internalid", "anyof", id]
                         /*
                         "AND",
                         ["item", "anyof", "7081"],
