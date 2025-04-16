@@ -343,7 +343,7 @@ define([
                 //arrResult = arrResult.filter(transaction => transaction.quantity != 0);
                 //let arrResult = arrRecordsDetail;
                 //filter(transaction => transaction.pedimentos == 0); // No tienen pedimentos
-                arrResult = arrResult.filter(transaction => transaction.pedimentos != 0 && transaction.pedimentos != transaction.quantity); // inconsistencias
+                arrResult = arrResult.filter(transaction => transaction.quantity != 0 && transaction.pedimentos != transaction.quantity); // inconsistencias
                 
                 arrResult.forEach(transaction => {
                     delete transaction.locationID;
