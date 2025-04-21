@@ -272,7 +272,7 @@ define([
                             //log.error("keyData",keyData)
                             //log.error("jsonData[keyData]",jsonData[keyData])
                             transaction.correlativo = jsonData[keyData].numero || "";
-                            transaction.date = jsonData[keyData].trandate || "";
+                            transaction.date = jsonData[keyData].date || "";
                             transaction.aduana = jsonData[keyData].aduana || "";
                             transaction.referenceSource = "";
                             transaction.trandate = "";
@@ -289,7 +289,7 @@ define([
                     }
                     
                 });
-                /*
+                
                 arrRecordsDetail = arrRecordsDetail.concat(addPedimentos);
                 //arrRecordsDetail = addPedimentos;
                 arrRecordsDetail.sort((a, b) => Number(a.id) - Number(b.id));
@@ -315,7 +315,8 @@ define([
                     const line = sumPedimentos[key];
                     return line.pedimentos != transaction.quantity
                 });
-                */
+                
+               /*
                 let pedimentosNotAsign = Object.values(jsonPedimentos).flat();
                 log.error("pedimentosNotAsign LENGTH",pedimentosNotAsign.length)
                 pedimentosNotAsign = pedimentosNotAsign.filter(pedimento => pedimento.revised == false);
@@ -338,17 +339,22 @@ define([
                     }
                     return objPedimento;
                 } )
-                
+                */
                 //arrResult = arrResult.filter(transaction => transaction.quantity != 0);
                 //let arrResult = arrRecordsDetail;
                 //filter(transaction => transaction.pedimentos == 0); // No tienen pedimentos
-                //filter(transaction => transaction.pedimentos != 0 && transaction.pedimentos != transaction.quantity); // inconsistencias
-                /*
+                arrResult = arrResult.filter(transaction => transaction.pedimentos != 0 && transaction.pedimentos != transaction.quantity); // inconsistencias
+                
                 arrResult.forEach(transaction => {
                     delete transaction.locationID;
                     delete transaction.itemID;
                 });
-                */
+                
+
+
+
+
+                
                 /*
                 arrResult.forEach(transaction => {
                     record.submitFields({
@@ -376,7 +382,7 @@ define([
                 });
                 log.error("deleteped cant",deleteped.length)
                 */
-                arrResult = pedimentosNotAsign.map(transaction => Object.values(transaction).join("\t"));
+                //arrResult = pedimentosNotAsign.map(transaction => Object.values(transaction).join("\t"));
 
 
                 const title = header.join('\t') + '\n';

@@ -25,8 +25,7 @@ define([
         function execute(Context) {
             // ID de la transacción que deseas duplicar
             try {
-                //deleteAllRecord();
-                loadcsv();
+                deleteRecord();
             } catch (error) {
                 log.error("error", error)
             }
@@ -78,6 +77,38 @@ define([
             }
             log.error("result",result)
             return result;
+        }
+
+        const deleteRecord = (csvText) => {
+            const entitiesSegment = [];
+            const entitySegmentSearch = search.create({
+                type: "customrecord_cseg_lr_co_name",
+                filters: [
+                    ["isinactive", "is", "F"]
+                ],
+                columns: [
+                    "internalid"
+                ],
+            });
+            let pageData = entitySegmentSearch.runPaged({ pageSize: 1000 });
+            if (pageData) {
+                pageData.pageRanges.forEach(function (pageRange) {
+                    let page = pageData.fetch({ index: pageRange.index });
+                    page.data.forEach(function (result) {
+                        const get = (i) => result.getValue(result.columns[i]);
+                        const internalid = get(0);
+                        entitiesSegment.push(internalid);
+                    });
+                });
+            }
+
+            entitiesSegment.forEach(element => {
+                record.delete({
+                    type: 'customrecord_cseg_lr_co_name',
+                    id: element
+                })
+            });
+            
         }
 
         return {
