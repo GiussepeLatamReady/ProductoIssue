@@ -1,73 +1,95 @@
 /* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =\
 ||   This script for Tools for Report                           ||
 ||                                                              ||
-||  File Name: LMRY_BR_WHT_CustPaymnt_MPRD.js	                ||
+||  File Name: LMRY_BR_WHT_CustPaymnt_Mass_MPRD.js	            ||
 ||                                                              ||
 ||  Version Date         Author        Remarks                  ||
-||  2.0     Apr 06 2020  LatamReady    Use Script 2.0           ||
+||  2.0     Nov 19 2020  LatamReady    Use Script 2.0           ||
  \= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = */
 /**
  *@NApiVersion 2.0
  *@NScriptType MapReduceScript
-  *@NModuleScope Public
-
+ *@NModuleScope Public
  */
-define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './Latam_Library/LMRY_libSendingEmailsLBRY_V2.0',
-    './WTH_Library/SMC_BR_WHT_CustPaymnt_LBRY', './WTH_Library/LMRY_BR_Export_Withholding_Sales_LBRY_V2.0', './WTH_Library/LMRY_BR_WHT_ON_Payment_LBRY_V2.0',
+define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './Latam_Library/LMRY_libSendingEmailsLBRY_V2.0', './WTH_Library/LMRY_BR_WHT_CustPaymnt_LBRY', './WTH_Library/LMRY_BR_Export_Withholding_Sales_LBRY_V2.0', './WTH_Library/LMRY_BR_WHT_ON_Payment_LBRY_V2.0',
     './Latam_Library/LMRY_Log_LBRY_V2.0'],
-    function (log, search, record, runtime, format, cache, library_mail, lbryBRPayment, libExportWHT, libWhtPayment, lbryLog) {
+    function (log, search, record, runtime, format, cache, library_mail, lbryBRPayment, libExportWHT, libWhtPayment, libLog) {
 
-        var LMRY_script = 'LatamReady - BR WHT Customer Payment MPRD';
+        var LMRY_script = 'LatamReady - BR WHT Cust Payment Massive MPRD';
         function getInputData() {
             var idLog = "";
             try {
-                log.error("getInputData", "START");
+                var transactions = {};
+                idLog = runtime.getCurrentScript().getParameter({ name: 'custscript_lmry_br_custpaymt_mass_log' });
+                log.debug('idlog', idLog);
                 var mrCache = cache.getCache({
-                    name: "lmry_br_custpayment_mr_cache",
+                    name: "lmry_br_custpayment_mass_mr_cache",
                     scope: cache.Scope.PRIVATE
                 });
-
                 mrCache.remove({
                     key: "paymentParams"
                 });
-
                 mrCache.remove({
                     key: "setupTaxSubsidiary"
                 });
 
-                idLog = runtime.getCurrentScript().getParameter({ name: 'custscript_smc_br_custpayment_log' });
-                var paymentParams = mrCache.get({
+                var params = mrCache.get({
                     key: "paymentParams",
                     loader: getParametersFromLog
                 });
-                log.error("paymentParams", paymentParams);
-                paymentParams = JSON.parse(paymentParams);
 
-                var setupTaxLoader = lbryBRPayment.getSetupTaxSubsidiary.bind(null, paymentParams['subsidiary']);
-                var setupTax = mrCache.get({
-                    key: "setupTaxSubsidiary",
-                    loader: setupTaxLoader,
-                });
-                log.error("setupTax", setupTax);
-                log.error("paymentParams.transactions", paymentParams.transactions);
-                return paymentParams.transactions;
+                log.debug("params", params);
+                if (params) {
+                    params = JSON.parse(params);
+                    var setupTax = mrCache.get({
+                        key: "setupTax",
+                        loader: lbryBRPayment.getSetupTaxSubsidiary.bind(null, params.subsidiary)
+                    });
+
+                    log.debug("setupTax", setupTax);
+                    setupTax = JSON.parse(setupTax);
+
+                    if (params["transactions"] && setupTax['paymentform']) {
+                        for (var keyPayment in params["transactions"]) {
+                            var keys = keyPayment.split("-");
+                            var customer = keys[0] || "";
+                            var invoices = params["transactions"][keyPayment];
+                            if (customer && invoices && Object.keys(invoices).length) {
+
+                                var paymentObj = util.extend({ customer: customer }, params);
+
+                                // var idpayment = "";
+                                // try {
+                                //     idpayment = lbryBRPayment.createPayment(paymentObj, invoices, setupTax['paymentform'], '1');
+                                //     log.debug("idpayment", idpayment);
+                                // } catch (err) {
+                                //     log.error("[ createPayment ]", err);
+                                //     library_mail.sendemail('[ createPayment ]' + err, LMRY_script);
+                                //     libLog.doLog({ title: "[ createPayment ]", message: err, extra: { customer: customer } });
+                                // }
+
+                                //paymentObj["idpayment"] = idpayment;
+                                var idIndividualLog = createRecordLog(idLog, paymentObj, invoices);
+                                for (var idInvoice in invoices) {
+                                    transactions[idInvoice] = invoices[idInvoice];
+                                    transactions[idInvoice]["customer"] = customer;
+                                    //transactions[idInvoice]["idpayment"] = idpayment;
+                                    transactions[idInvoice]["idlog"] = idIndividualLog;
+                                }
+
+                            }
+                        }
+
+                        log.debug('transactions', transactions);
+                    }
+                }
+
+                return transactions;
 
             } catch (err) {
+                log.error("[ getInputData ]", err);
                 library_mail.sendemail('[ getInputData ]' + err, LMRY_script);
-                if (idLog) {
-                    record.submitFields({
-                        type: "customrecord_lmry_br_custpayment_log",
-                        id: idLog,
-                        values: {
-                            "custrecord_lmry_br_custpaym_log_status": "3"
-                        },
-                        options: {
-                            disableTriggers: true
-                        }
-                    });
-                }
-                lbryLog.doLog({ title: "[ getInputData ]", message: err });
-                log.error("getInputData", err)
+                libLog.doLog({ title: "[ getInputData ]", message: err });
             }
         }
 
@@ -82,24 +104,25 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './
 
                 var mapValues = JSON.parse(context.value);
                 log.debug('mapValues', JSON.stringify(mapValues));
-
+                var customer = mapValues["customer"];
                 var amountPaid = parseFloat(mapValues['amountpaid']);
                 var interest = parseFloat(mapValues["interest"]);
                 var penalty = parseFloat(mapValues["penalty"]);
-                var advance = parseFloat(mapValues["advance"]) || 0;
+                //var advance = parseFloat(mapValues["advance"]);
                 //var primerPago = mapValues['primerpago'];
+                //C0815
                 var discount = parseFloat(mapValues["discount"]);
 
+                var idLog = mapValues["idlog"];
+
                 var mrCache = cache.getCache({
-                    name: "lmry_br_custpayment_mr_cache",
-                    scope: cache.Scope.PRIVATE
+                    name: "lmry_br_custpayment_mass_mr_cache"
                 });
 
                 var paymentParams = mrCache.get({
                     key: "paymentParams",
                     loader: getParametersFromLog
                 });
-
                 log.debug("paymentParams", paymentParams);
                 paymentParams = JSON.parse(paymentParams);
 
@@ -111,11 +134,12 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './
                 setupTax = JSON.parse(setupTax);
 
                 var firstPayment = paymentParams['firstpayment'];
+                paymentParams.customer = customer;
 
                 var localExchangeRate = lbryBRPayment.getPaymentLocalExchangeRate(setupTax, paymentParams);
                 log.debug("localExchangeRate", localExchangeRate);
 
-                var reclassTaxResults = lbryBRPayment.getReclassWhtTaxResults(invoiceId, installmentNum, amountPaid, firstPayment, setupTax, localExchangeRate, advance);
+                var reclassTaxResults = lbryBRPayment.getReclassWhtTaxResults(invoiceId, installmentNum, amountPaid, firstPayment, setupTax, localExchangeRate);
                 log.debug('reclassTaxResults', JSON.stringify(reclassTaxResults));
 
                 //Se crea el invoice de Interes y Multas
@@ -152,35 +176,39 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './
                 }
 
                 context.write({
-                    key: paymentParams.customer,
+                    key: customer,
                     value: {
-                        invoiceId: invoiceId, installmentNum: installmentNum, notaDebitoId: notaDebitoId, reclassTaxResults: reclassTaxResults,
-                        whtTaxResults: whtTaxResults, exportWht: exportWht, whtAmt: whtAmt, creditMemos: creditMemos
+                        invoiceId: invoiceId, installmentNum: installmentNum, notaDebitoId: notaDebitoId,
+                        reclassTaxResults: reclassTaxResults, whtTaxResults: whtTaxResults,
+                        exportWht: exportWht, whtAmt: whtAmt, creditMemos: creditMemos, idLog: idLog
                     }
                 });
+
 
             } catch (err) {
                 log.error('[ map ]', err);
                 library_mail.sendemail('[ map ]' + err, LMRY_script);
-                lbryLog.doLog({ title: "[ map ]", message: err });
+                libLog.doLog({ title: "[ map ]", message: err });
             }
         }
 
         function reduce(context) {
+            var idLog = "";
             try {
+                var customer = context.key;
                 var reduceValues = context.values;
                 log.debug('reduceValues', JSON.stringify(reduceValues));
-
+                var reduceObj = JSON.parse(reduceValues[0]);
+                idLog = reduceObj["idLog"];
 
                 var mrCache = cache.getCache({
-                    name: "lmry_br_custpayment_mr_cache"
+                    name: "lmry_br_custpayment_mass_mr_cache"
                 });
 
                 var paymentParams = mrCache.get({
                     key: "paymentParams",
                     loader: getParametersFromLog
                 });
-
                 log.debug("paymentParams", paymentParams);
                 paymentParams = JSON.parse(paymentParams);
 
@@ -191,7 +219,9 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './
                 log.debug("setupTax", setupTax);
                 setupTax = JSON.parse(setupTax);
 
-                var transactions = paymentParams.transactions;
+                var currency = paymentParams.currency;
+                var totalTransactions = paymentParams.transactions;
+                var transactions = totalTransactions[customer + "-" + currency];
 
                 var notaDebitos = {}, taxResults = [], creditMemos = [], reclassTaxResults = [];
                 for (var i = 0; i < reduceValues.length; i++) {
@@ -214,7 +244,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './
                                 key = invoiceId + "-" + installmentNum;
                             }
 
-                            if (transactions.hasOwnProperty(key)) {
+                            if (transactions && transactions.hasOwnProperty(key)) {
                                 var interest = transactions[key].interest || 0.00;
                                 interest = parseFloat(interest);
                                 var penalty = transactions[key].penalty || 0.00;
@@ -238,10 +268,10 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './
                 log.debug("taxResults", JSON.stringify(taxResults));
                 log.debug("creditMemos", JSON.stringify(creditMemos));
 
-                var paymentId = getPayment(invoiceId);
-                deleteTaxResults(paymentId);
+                paymentParams.customer = customer;
+                var paymentId = lbryBRPayment.createPayment(paymentParams, transactions, notaDebitos, setupTax.paymentform, '1');
                 log.debug("paymentId", paymentId);
-                var idLog = runtime.getCurrentScript().getParameter({ name: 'custscript_smc_br_custpayment_log' });
+
                 record.submitFields({
                     type: "customrecord_lmry_br_custpayment_log",
                     id: idLog,
@@ -252,7 +282,6 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './
                         disableTriggers: true
                     }
                 });
-
 
                 var licenses = library_mail.getLicenses(paymentParams.subsidiary);
                 var FEAT_SUMMARY_WHT = library_mail.getAuthorization(1003, licenses);
@@ -318,7 +347,6 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './
             } catch (err) {
                 log.error('[ reduce ]', err);
                 library_mail.sendemail('[ reduce ]' + err, LMRY_script);
-                var idLog = runtime.getCurrentScript().getParameter({ name: 'custscript_smc_br_custpayment_log' });
                 if (idLog) {
                     record.submitFields({
                         type: "customrecord_lmry_br_custpayment_log",
@@ -330,21 +358,23 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './
                             disableTriggers: true
                         }
                     });
-                    lbryLog.doLog({ title: "[ reduce ]", message: err });
                 }
+                libLog.doLog({ title: "[ reduce ]", message: err });
             }
         }
 
 
         function summarize(context) {
+            var idLog = "";
             try {
+                idLog = runtime.getCurrentScript().getParameter({ name: 'custscript_lmry_br_custpaymt_mass_log' });
                 var totalRows = 0, totalSuccess = 0;
                 var payments = [];
                 context.output.iterator().each(function (key, value) {
                     var objValue = JSON.parse(value);
                     var isSuccess = objValue.isSuccess;
                     if (isSuccess == 'T') {
-                        payments.push(key);
+                        payments.push(Number(key));
                         totalSuccess++;
                     }
                     totalRows++;
@@ -356,242 +386,238 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/format', 'N/cache', './
                 log.debug('totalSuccess', totalSuccess);
                 log.debug('payments', payments);
 
-                var idLog = runtime.getCurrentScript().getParameter({ name: 'custscript_smc_br_custpayment_log' });
-                var idpayment = payments[0] || '';
-                var status = (idpayment) ? '2' : '3';
+                var searchLogs = search.create({
+                    type: "customrecord_lmry_br_custpayment_log",
+                    filters: [
+                        ["custrecord_lmry_br_custpaym_log_massive", "anyof", idLog]
+                    ],
+                    columns: ["internalid", "custrecord_lmry_br_custpaym_log_idpaymt"]
+                });
 
-                record.submitFields({
-                    type: 'customrecord_lmry_br_custpayment_log',
-                    id: idLog,
-                    values: {
-                        'custrecord_lmry_br_custpaym_log_status': status,
-                    },
-                    options: {
-                        disableTriggers: true
+                var results = searchLogs.run().getRange(0, 1000);
+                for (var i = 0; i < results.length; i++) {
+                    var idIndividualLog = results[i].getValue("internalid");
+                    var idPayment = results[i].getValue("custrecord_lmry_br_custpaym_log_idpaymt");
+
+                    var status = "3";
+                    if (payments.indexOf(Number(idPayment)) != -1) {
+                        status = "2";
                     }
-                });
-            }
-            catch (err) {
-                library_mail.sendemail('[ summarize ]' + err, LMRY_script);
-                var idLog = runtime.getCurrentScript().getParameter({ name: 'custscript_smc_br_custpayment_log' });
-                if (idLog) {
-                    record.submitFields({
-                        type: "customrecord_lmry_br_custpayment_log",
-                        id: idLog,
-                        values: {
-                            "custrecord_lmry_br_custpaym_log_status": "3"
-                        },
-                        options: {
-                            disableTriggers: true
-                        }
-                    });
+
+                    if (idIndividualLog) {
+                        record.submitFields({
+                            type: 'customrecord_lmry_br_custpayment_log',
+                            id: idIndividualLog,
+                            values: {
+                                'custrecord_lmry_br_custpaym_log_status': status,
+                            },
+                            options: {
+                                disableTriggers: true
+                            }
+                        });
+                    }
                 }
-                lbryLog.doLog({ title: "[ summarize ]", message: err });
+            } catch (err) {
+                log.error("[ summarize ]", err);
+                library_mail.sendemail('[ summarize ]' + err, LMRY_script);
+                libLog.doLog({ title: "[ summarize ]", message: err });
             }
         }
 
-
-        function deleteTaxResults (id) {
-            let searchRecordLog = search.create({
-                type: 'customrecord_lmry_br_transaction',
-                filters: [
-                    ['custrecord_lmry_br_transaction', 'is', id]
-                ],
-                columns: [
-                    'internalid'
-                ]
-            })
-            searchRecordLog.run().each(function (result) {
-                let idTax = result.getValue(result.columns[0]);
-    
-                record.delete({
-                    type: 'customrecord_lmry_br_transaction',
-                    id: idTax,
-                    isDynamic: true
-                });
-                return true;
-            });
-        }
-        s
         function getParametersFromLog() {
-            var logId = runtime.getCurrentScript().getParameter({ name: 'custscript_smc_br_custpayment_log' });
             var params = {};
+
+            var idlog = runtime.getCurrentScript().getParameter({ name: 'custscript_lmry_br_custpaymt_mass_log' });
 
             var FEAT_DPT = runtime.isFeatureInEffect({ feature: "DEPARTMENTS" });
             var FEAT_CLASS = runtime.isFeatureInEffect({ feature: "CLASSES" });
             var FEAT_LOC = runtime.isFeatureInEffect({ feature: "LOCATIONS" });
 
             var columns = [
-                'custrecord_lmry_br_custpaym_log_subsid', 'custrecord_lmry_br_custpaym_customer', 'custrecord_lmry_br_custpaym_log_date',
-                'custrecord_lmry_br_custpaym_log_employee', 'custrecord_lmry_br_custpaym_log_currency', 'custrecord_lmry_br_custpaym_log_aracc',
-                'custrecord_lmry_br_custpaym_log_bankacc', 'custrecord_lmry_br_custpaym_log_period', 'custrecord_lmry_br_custpaym_log_data',
-                'custrecord_lmry_br_custpaym_log_doctype', 'custrecord_lmry_br_custpaym_log_memo', 'custrecord_lmry_br_custpaym_log_segments',
-                "custrecord_lmry_br_custpaym_log_paymmeth", 'custrecord_lmry_br_custpaym_log_advance', 'custrecord_lmry_br_custpaym_log_firstpay',
-                "custrecord_lmry_br_custpaym_exchangerate", "custrecord_lmry_br_custpaym_accountbooks", "custrecord_lmry_br_custpaym_log_idpaymt"
+                'custrecord_lmry_br_custpymt_mass_subsid', 'custrecord_lmry_br_custpymt_mass_date',
+                'custrecord_lmry_br_custpymt_mass_emp', 'custrecord_lmry_br_custpymt_mass_aracc',
+                'custrecord_lmry_br_custpymt_mass_bankacc', 'custrecord_lmry_br_custpymt_mass_period', 'custrecord_lmry_br_custpymt_mass_data',
+                'custrecord_lmry_br_custpymt_mass_doctype', 'custrecord_lmry_br_custpymt_mass_memo', 'custrecord_lmry_br_custpymt_mass_paymeth',
+                'custrecord_lmry_br_custpymt_mass_currenc', 'custrecord_lmry_br_custpymt_mass_fstpay', 'custrecord_lmry_br_custpymt_mass_exchrat', 'custrecord_lmry_br_custpymt_mass_acbooks'
             ];
 
             if (FEAT_DPT == 'T' || FEAT_DPT == true) {
-                columns.push('custrecord_lmry_br_custpaym_log_deparmen');
+                columns.push('custrecord_lmry_br_custpymt_mass_departm');
             }
 
             if (FEAT_CLASS == 'T' || FEAT_CLASS == true) {
-                columns.push('custrecord_lmry_br_custpaym_log_class');
+                columns.push('custrecord_lmry_br_custpymt_mass_class');
             }
 
             if (FEAT_LOC == 'T' || FEAT_LOC == true) {
-                columns.push('custrecord_lmry_br_custpaym_log_location');
+                columns.push('custrecord_lmry_br_custpymt_mass_locat');
             }
 
             var result = search.lookupFields({
-                type: 'customrecord_lmry_br_custpayment_log',
-                id: logId,
+                type: 'customrecord_lmry_br_custpymt_mass_log',
+                id: idlog,
                 columns: columns
             });
-
-
-            params['customer'] = result['custrecord_lmry_br_custpaym_customer'][0]['value'];
-            params['subsidiary'] = result['custrecord_lmry_br_custpaym_log_subsid'][0]['value'];
-            var date = result['custrecord_lmry_br_custpaym_log_date'];
-            //date = format.parse({ value: date, type: format.Type.DATE });
+            params["userid"] = result["custrecord_lmry_br_custpymt_mass_emp"][0]["value"];
+            params['subsidiary'] = result['custrecord_lmry_br_custpymt_mass_subsid'][0]['value'];
+            var date = result['custrecord_lmry_br_custpymt_mass_date'];
             params['date'] = date;
 
-            params['currency'] = result['custrecord_lmry_br_custpaym_log_currency'][0]['value'];
-            var exchangeRate = result["custrecord_lmry_br_custpaym_exchangerate"];
+            params['currency'] = result['custrecord_lmry_br_custpymt_mass_currenc'][0]['value'];
+            var exchangeRate = result["custrecord_lmry_br_custpymt_mass_exchrat"];
             params['exchangerate'] = parseFloat(exchangeRate);
-
-            params['araccount'] = result['custrecord_lmry_br_custpaym_log_aracc'][0]['value'];
+            params['araccount'] = result['custrecord_lmry_br_custpymt_mass_aracc'][0]['value'];
 
             var undepfunds = 'T';
-            var bankaccount = result['custrecord_lmry_br_custpaym_log_bankacc'] || '';
+            var bankaccount = result['custrecord_lmry_br_custpymt_mass_bankacc'] || '';
             if (bankaccount && bankaccount.length) {
                 undepfunds = 'F';
-                params['bankaccount'] = result['custrecord_lmry_br_custpaym_log_bankacc'][0]['value'];
+                params['bankaccount'] = result['custrecord_lmry_br_custpymt_mass_bankacc'][0]['value'];
             }
             params['undepfunds'] = undepfunds;
 
-            params['period'] = result['custrecord_lmry_br_custpaym_log_period'][0]['value'];
+            params['period'] = result['custrecord_lmry_br_custpymt_mass_period'][0]['value'];
 
-            var document = result['custrecord_lmry_br_custpaym_log_doctype'] || '';
+            var document = result['custrecord_lmry_br_custpymt_mass_doctype'] || '';
             if (document && document.length) {
                 params['document'] = document[0]['value'];
             }
 
-            var department = result['custrecord_lmry_br_custpaym_log_deparmen'] || '';
+            var department = result['custrecord_lmry_br_custpymt_mass_departm'] || '';
             if (department && department.length) {
                 params['department'] = department[0]['value'];
             }
 
-            var class_ = result['custrecord_lmry_br_custpaym_log_class'] || '';
+            var class_ = result['custrecord_lmry_br_custpymt_mass_class'] || '';
 
             if (class_ && class_.length) {
                 params['class'] = class_[0]['value'];
             }
 
-            var location = result['custrecord_lmry_br_custpaym_log_location'] || '';
+            var location = result['custrecord_lmry_br_custpymt_mass_locat'] || '';
 
             if (location && location.length) {
                 params['location'] = location[0]['value'];
             }
 
-            var csegments = result["custrecord_lmry_br_custpaym_log_segments"];
-            if (csegments) {
-                params["csegments"] = JSON.parse(csegments);
-            }
+            params['memo'] = result['custrecord_lmry_br_custpymt_mass_memo'] || '';
 
-            params['memo'] = result['custrecord_lmry_br_custpaym_log_memo'] || '';
-
-            var paymentmethod = result['custrecord_lmry_br_custpaym_log_paymmeth'];
+            var paymentmethod = result['custrecord_lmry_br_custpymt_mass_paymeth'];
             if (paymentmethod && paymentmethod.length) {
                 params['paymentmethod'] = paymentmethod[0]['value'];
             }
-            var strTransactions = result['custrecord_lmry_br_custpaym_log_data'];
+            var strTransactions = result['custrecord_lmry_br_custpymt_mass_data'];
 
             if (strTransactions) {
                 params['transactions'] = JSON.parse(strTransactions);
             }
 
-            var advance = result['custrecord_lmry_br_custpaym_log_advance'] || '';
-            if (advance) {
-                params['advance'] = JSON.parse(advance);
-            }
-
-            var firstPayment = result['custrecord_lmry_br_custpaym_log_firstpay'];
+            var firstPayment = result['custrecord_lmry_br_custpymt_mass_fstpay'];
             if (firstPayment) {
                 params['firstpayment'] = JSON.parse(firstPayment);
             }
 
-
-            var strBooks = result["custrecord_lmry_br_custpaym_accountbooks"];
-            if (strBooks) {
-                params["books"] = JSON.parse(strBooks);
-            }
-
-            var paymentId = result["custrecord_lmry_br_custpaym_log_idpaymt"];
-            if (paymentId && paymentId.length) {
-                paymentId = paymentId[0].value;
-            }
-
-            if (paymentId) {
-                params["paymentId"] = paymentId;
-                var bookString = lbryBRPayment.getAccountingBooksString(paymentId);
-                params["bookString"] = bookString;
+            var books = result["custrecord_lmry_br_custpymt_mass_acbooks"];
+            if (books) {
+                params["books"] = JSON.parse(books);
             }
 
             return params;
         }
 
-        function getPayment(invoiceId) {
-            var objTransaction = {};
+        function createRecordLog(idParentLog, params, transactions) {
+            var recordlog = record.create({
+                type: 'customrecord_lmry_br_custpayment_log'
+            });
 
-            objTransaction[invoiceId] = {};
-            search.create({
-                type: "transaction",
-                filters: [
-                    ['mainline', 'is', 'T'],
-                    'AND',
-                    ['internalid', 'is', invoiceId]
-                ],
-                columns: ['internalid', 'tranid', 'entity', 'applyingTransaction.type', 'applyingTransaction.fxamount', 'applyingTransaction.tranid', 'applyingTransaction.internalid', 'applyingTransaction.memo']
-            }).run().each(function (result) {
-                var internalid = result.getValue("internalid");
-
-                objTransaction[internalid].tranid_new = result.getValue('tranid');
-                objTransaction[internalid].entity = result.getValue('entity');
-                var ObjApply = {
-                    type: result.getText(result.columns[3]),
-                    amount: result.getValue(result.columns[4]),
-                    tranid: result.getValue(result.columns[5]),
-                    internalid: result.getValue(result.columns[6]),
-                    memo: result.getValue(result.columns[7])
-                }
-
-                if (!objTransaction[internalid].apply) objTransaction[internalid].apply = [];
-                objTransaction[internalid].apply.push(ObjApply)
-                return true;
-            })
-            log.error("objTransaction", objTransaction);
-            log.error("objTransaction[invoiceId].apply", objTransaction[invoiceId].apply);
-            log.error("objTransaction[invoiceId].apply typeof", typeof objTransaction[invoiceId].apply);
-            var applyObj = objTransaction[invoiceId].apply;
-            var payment = null;
-
-            for (var key in applyObj) {
-                if (applyObj.hasOwnProperty(key)) {
-                    var tx = applyObj[key];
-                    if (tx.type === "Payment") {
-                        payment = tx.internalid;
-                        break;
-                    }
-                }
+            if (params["subsidiary"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_subsid', value: params["subsidiary"] });
             }
-            log.error("payment obj", payment);
-            return payment || "";
+
+            if (params["customer"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_customer', value: params["customer"] });
+            }
+            if (params["date"]) {
+                var date = format.parse({ value: params["date"], type: format.Type.DATE });
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_date', value: date });
+            }
+            if (params["userid"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_employee', value: params["userid"] });
+            }
+            if (params["currency"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_currency', value: params["currency"] });
+            }
+
+            if (params["araccount"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_aracc', value: params["araccount"] });
+            }
+
+            if (params["bankaccount"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_bankacc', value: params["bankaccount"] });
+            }
+            if (params["period"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_period', value: params["period"] });
+            }
+            if (params["document"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_doctype', value: params["document"] });
+            }
+            if (params["department"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_deparmen', value: params["department"] });
+            }
+            if (params["class"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_class', value: params["class"] });
+            }
+            if (params["location"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_location', value: params["location"] });
+            }
+            if (params["memo"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_memo', value: params["memo"] });
+            }
+
+            if (params["paymentmethod"]) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_paymmeth', value: params["paymentmethod"] });
+            }
+
+            recordlog.setValue({ fieldId: "custrecord_lmry_br_custpaym_log_type", value: "2" });
+
+            recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_status', value: "1" });
+
+            if (params["error"]) {
+                recordlog.setValue({ fieldId: "custrecord_lmry_br_custpaym_log_error", value: JSON.stringify(params["error"]) });
+            }
+
+            recordlog.setValue({ fieldId: "custrecord_lmry_br_custpaym_log_massive", value: idParentLog });
+
+            if (Object.keys(transactions).length) {
+                recordlog.setValue({ fieldId: 'custrecord_lmry_br_custpaym_log_data', value: JSON.stringify(transactions) });
+            }
+
+            if (params['exchangerate']) {
+                recordlog.setValue({ fieldId: "custrecord_lmry_br_custpaym_exchangerate", value: parseFloat(params["exchangerate"]) });
+            }
+
+            if (params['firstpayment']) {
+                recordlog.setValue({ fieldId: "custrecord_lmry_br_custpaym_log_firstpay", value: JSON.stringify(params['firstpayment']) });
+            }
+
+            if (params["books"]) {
+                recordlog.setValue({ fieldId: "custrecord_lmry_br_custpaym_accountbooks", value: JSON.stringify(params["books"]) });
+            }
+
+            var idlog = recordlog.save({
+                enableSourcing: true,
+                ignoreMandatoryFields: true,
+                disableTriggers: true
+            });
+
+            return idlog;
         }
+
 
         function round2(num) {
-            var e = (num >= 0) ? 1e-6 : -1e-6;
-            return parseFloat(Math.round(parseFloat(num) * 1e2 + e) / 1e2);
+            return parseFloat(Math.round(parseFloat(num) * 1e2 + 1e-6) / 1e2);
         }
+
 
         return {
             getInputData: getInputData,

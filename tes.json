@@ -1,21 +1,13 @@
 {
-    type: "error.SuiteScriptError",
-    name: "USER_ERROR",
-    message: "Please enter value(s) for: Location",
-    id: "",
-    stack: [
-       "Error\n    at RecordInvoker.save (suitescript/resources/javascript/record/serverRecordService.js:371:13)\n    at NetSuiteObject.thenableFunction() (suitescript/resources/javascript/record/proxy.js:115:24)\n    at createJournalTransferIgv (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:266:38)\n    at transferIgv (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:286:5)\n    at Object.executeJournalIVA (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:85:7)\n    at Object.map (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/src/purchases/LMRY_PE_generate_JournalDetractions_MPRD_v2.0.js:124:24)"
-    ],
-    cause: {
-       type: "internal error",
-       code: "USER_ERROR",
-       details: "Please enter value(s) for: Location",
-       userEvent: null,
-       stackTrace: [
-          "Error\n    at RecordInvoker.save (suitescript/resources/javascript/record/serverRecordService.js:371:13)\n    at NetSuiteObject.thenableFunction() (suitescript/resources/javascript/record/proxy.js:115:24)\n    at createJournalTransferIgv (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:266:38)\n    at transferIgv (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:286:5)\n    at Object.executeJournalIVA (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/lib/LMRY_detrac_journal_iva_LBRY_2.1.js:85:7)\n    at Object.map (/SuiteBundles/Bundle 35754/LatamReady - PE Detracctions/src/purchases/LMRY_PE_generate_JournalDetractions_MPRD_v2.0.js:124:24)"
-       ],
-       notifyOff: false
-    },
-    notifyOff: false,
-    userFacing: true
- }
+  "values": {
+      "GROUP(custrecord_lmry_mx_ped_num)": "22  16  1774 2001004",
+      "SUM(custrecord_lmry_mx_ped_quantity)": "-4",
+      "GROUP(custrecord_lmry_mx_ped_date)": "4/2/2025",
+      "GROUP(custrecord_lmry_mx_ped_aduana)": [
+          {
+              "value": "24",
+              "text": "MANZANILLO, MANZANILLO, COLIMA."
+          }
+      ]
+  }
+}
