@@ -455,10 +455,9 @@ define(['N/search', 'N/runtime', 'N/ui/serverWidget', 'N/log', './Latam_Library/
                         Library_HideView.HideSubTab(FORM, LMRY_countr[1], FORM.type, licenses);
                     }
                 }else{
-                    log.error("isURET",isURET)
-                    if (isURET == 'view' || isURET == 'edit') {
-                        Library_Mail.onFieldsHide(1, FORM, true);
-                    }
+                    
+                    Library_Mail.onFieldsHide(1, FORM, true);
+                    
                     if ((isURET == 'view' || isURET == 'edit' || isURET == 'copy') && (FORM != '' && FORM != null)) {
                         Library_HideView.HideSubTab(FORM, LMRY_countr[1], FORM.type, licenses);
                     }

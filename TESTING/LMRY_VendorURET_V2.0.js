@@ -337,9 +337,9 @@ define([
                     }
                 }else{
                     log.error("isURET",isURET)
-                    if (isURET == 'view' || isURET == 'edit') {
-                        Library_Mail.onFieldsHide(1, RCD, true);
-                    }
+                    
+                    Library_Mail.onFieldsHide(1, RCD, true);
+                    
                     if ((isURET == 'view' || isURET == 'edit') && (FORM != '' && FORM != null)) {
                         Library_HideView.HideSubTab(FORM, LMRY_countr[1], RCD.type, licenses);
                     }
