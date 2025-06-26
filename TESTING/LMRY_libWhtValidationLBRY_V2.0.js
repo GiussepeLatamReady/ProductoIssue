@@ -44,7 +44,7 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
             //log.debug('result', result);
 
             if (result.state == true) {
-                //  log.debug('Son iguales');
+                log.debug('Son iguales');
                 return true;
             }
 
@@ -240,11 +240,11 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
                 var searchresult = savedsearch.run();
 
                 var objResult = searchresult.getRange(0, 1000);
-                log.debug('objResult', objResult);
+                //log.debug('objResult', objResult);
                 if (!objResult || !objResult.length) return {};
 
                 var whtCodesData = {};
-                log.debug('objResult length', objResult.length);
+                //log.debug('objResult length', objResult.length);
                 for (var i = 0; i < objResult.length; i++) {
                     var columns = objResult[i].columns;
                     
@@ -256,6 +256,7 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
                         Field_Rate = parseFloat(objResult[i].getValue('custrecord_lmry_wht_coderate'));
                     }
                     var whtId = objResult[i].id;
+                    log.error("whtId",whtId);
                     var Field_whtkind = objResult[i].getValue('custrecord_lmry_wht_kind');
                     var Field_datfrom = objResult[i].getValue(columns[6]);
                     var Field_datuntil = objResult[i].getValue(columns[7]);
@@ -268,6 +269,7 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
                     if ((Field_datfrom == '' || Field_datfrom == null) ||
                         (Field_datuntil == '' || Field_datuntil == null) ||
                         (Field_datfrom > Field_DateTran || Field_DateTran > Field_datuntil)) {
+                            log.error("stop","fechas")
                         continue;
                     }
 
@@ -293,12 +295,14 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
 
                     // Valida que la retencion sea a la transaccion, no al pago
                     if (Field_taxpoint != 1) {
+                        log.error("stop","Field_taxpoint")
                         continue;
                     }
 
                     // Valida si el campo standar esta configurado
                     if (Field_Standar == '' || Field_Standar == null ||
                         Available_onts == 'F' || Available_onts == false) {
+                            log.error("stop","campo standar")
                         continue;
                     }
 
@@ -318,7 +322,10 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
                     log.debug("[variable_rate, amount_wht, base_wht, rate_wht, apply_transaction]", [variable_rate, amount_wht, base_wht, rate_wht, apply_transaction])
                     if (variable_rate && amount_wht && base_wht && rate_wht && apply_transaction) {
                         var surpass_minimum = base_wht >= Field_cminbase;
-                        if (!surpass_minimum) continue;
+                        if (!surpass_minimum) {
+                            log.error("stop surpass_minimum",surpass_minimum)
+                            continue;
+                        }
 
                         var localamount = Obj_RCD.getValue({ fieldId: Field_Custom });
                         var foreingamount = round2(localamount);
@@ -394,6 +401,11 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
 
                     // El importe debe ser mayor al minimo y mayor a cero
                     var tmpAmount = parseFloat(amount) * exchangeRate;
+                    log.error("tmpAmount",tmpAmount)
+                    log.error("parseFloat(Field_cminbase)",parseFloat(Field_cminbase))
+                    log.error("amountresult",parseFloat(amountresult));
+                    log.error("valid",(tmpAmount >= parseFloat(Field_cminbase) && tmpAmount > 0) &&
+                        parseFloat(amountresult) > 0)
                     if ((tmpAmount >= parseFloat(Field_cminbase) && tmpAmount > 0) &&
                         parseFloat(amountresult) > 0) {
 
@@ -1410,8 +1422,10 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
         }
 
         function adjustWhts(recordObj, whts, exchangerate) {
+            log.error("whts init",whts)
             var createdfrom = recordObj.getValue('createdfrom');
             if (createdfrom) {
+                /*
                 var recordtype;
                 search.create({
                     type:"transaction",
@@ -1423,6 +1437,7 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
                     recordtype = result.getValue(result.columns[0]);
                 });
                 if (recordtype != "invoice" && recordtype != "vendorbill") return false;
+                */
                 var numberApply = recordObj.getLineCount({ sublistId: 'apply' });
                 var alreadyapplied = 0;
                 var applied = 0;
@@ -1437,7 +1452,8 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
                 }
                 applied = Number(applied);
                 alreadyapplied = Number(alreadyapplied);
-
+                log.error("applied",applied)
+                log.error("alreadyapplied",alreadyapplied)
                 if (applied == alreadyapplied) {
                     var total = recordObj.getValue('total');
                     var accumulated = 0;
@@ -1447,20 +1463,30 @@ define(['./LMRY_libSendingEmailsLBRY_V2.0', './LMRY_libNumberInWordsLBRY_V2.0', 
                         if (whts[wht].kind == "2") continue;
                         whtTransaction[wht] = whts[wht];
                     }
-
+                    log.error("for","start")
                     for (var wht in whtTransaction) {
+                        log.error("limit","**********************************************************")
+                        log.error("wht",wht)
                         accumulated += round2(whtTransaction[wht].foreing);
+                        log.error("accumulated",accumulated)
                         contador++;
                         if (contador == Object.keys(whtTransaction).length) {
+                            log.error("ultimo","ultimo")
                             var difference = round2(total - applied - accumulated);
+                            log.error("round2(total - applied - accumulated)",total+ " - "+applied+" - "+accumulated)
+                            log.error("difference",difference)
                             if (difference) {
                                 whts[wht].foreing += difference;
                                 whts[wht].local = whts[wht].foreing * exchangerate;
                             }
                         }
+                        log.error("limit","**********************************************************")
                     }
+                    log.error("for","end")
                 }
             }
+
+            log.error("whts end",whts)
         }
 
         function getTransactionsToDelete(idTransaction, typeTransaction) {
