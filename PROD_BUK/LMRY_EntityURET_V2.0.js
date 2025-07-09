@@ -443,6 +443,7 @@ define(['N/search', 'N/runtime', 'N/ui/serverWidget', 'N/log', './Latam_Library/
                 var hide_sublist = Library_Mail.getHideView(LMRY_countr, 5, licenses);
 
                 LMRY_access = Library_Mail.getCountryOfAccess(LMRY_countr, licenses);
+
                 // Solo si tiene acceso
                 if (LMRY_access == true) {
                     if (isURET == 'view' && hide_entities) {
@@ -451,13 +452,6 @@ define(['N/search', 'N/runtime', 'N/ui/serverWidget', 'N/log', './Latam_Library/
                     }
 
                     if ((isURET == 'view' || isURET == 'edit' || isURET == 'copy') && (FORM != '' && FORM != null) && hide_sublist) {
-                        Library_HideView.HideSubTab(FORM, LMRY_countr[1], FORM.type, licenses);
-                    }
-                }else{
-                    
-                    Library_Mail.onFieldsHide(1, FORM, true);
-                    
-                    if ((isURET == 'view' || isURET == 'edit' || isURET == 'copy') && (FORM != '' && FORM != null)) {
                         Library_HideView.HideSubTab(FORM, LMRY_countr[1], FORM.type, licenses);
                     }
                 }
