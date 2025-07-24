@@ -12,8 +12,6 @@ var lmryTypeTransaction = '';
 var lmrySubsidiaryId = '';
 var fechaTransaction = new Date();
 var featuresubs = '';
-var feamultibook;
-var featAccountMapping;
 var ArrTaxCode = new Array();
 var subsidiary = '';
 var entityID = '';
@@ -27,14 +25,37 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book){
 		entityID = transactionRecord.getFieldValue("entity");
 
 		// Solo aplica para Invoice y Credit Memo
+		nlapiLogExecution('EMERGENCY', 'lmryTypeTransaction' , lmryTypeTransaction + ' , ' + transactionRecord.getFieldValue('tranid'));
 		if (lmryTypeTransaction!='INVOICE' && lmryTypeTransaction!='CREDITMEMO' && lmryTypeTransaction!='ITEMFULFILLMENT') { return true; }
-		feamultibook = nlapiGetContext().getFeature('MULTIBOOK');
+
 		featuresubs = nlapiGetContext().getFeature('SUBSIDIARIES');
-		featAccountMapping = nlapiGetContext().getFeature("coaclassificationmanagement");
 		if (featuresubs == 'T' || featuresubs==true) { lmrySubsidiaryId = transactionRecord.getFieldValue('subsidiary'); }
 
 		// Solo para Mexico
 		if (lmrySubsidiaryId != '' && lmrySubsidiaryId != null) { strCountry = nlapiLookupField('subsidiary', lmrySubsidiaryId, 'country'); }
+
+		// Obtener el campo personalizado
+		/*var namefield = '';
+
+		// Busqueda - Filtros
+		var filters = null;
+		if (featuresubs == 'T' || featuresubs==true){
+			filters = new Array();
+			filters[0] = new nlobjSearchFilter( 'custrecord_lmry_mx_gl_subsidiary', null, 'anyof', lmrySubsidiaryId);
+		}
+		// Busqueda - Campos
+		var columns = new Array();
+			columns[0] = new nlobjSearchColumn('custrecord_lmry_mx_gl_field');
+		// Ejecutas la busqueda
+		var hidefields = nlapiSearchRecord( 'customrecord_lmry_mx_gl_lines_plug_in', null, filters , columns );
+		if (hidefields!=null && hidefields!='') {
+			if (hidefields.length>0) {
+				namefield = hidefields[0].getValue('custrecord_lmry_mx_gl_field');
+			}
+		}
+
+		// Solo para Subsidiaria Mexico y que el campo personaliado este definido
+		nlapiLogExecution('EMERGENCY', 'strCountry , namefield' , strCountry + ' , ' + namefield);*/
 
 		if ( (strCountry=='MX' || strCountry=='mx')/* && (namefield!='' && namefield!=null) */)
 		{
@@ -45,6 +66,10 @@ function customizeGlImpact(transactionRecord, standardLines, customLines, book){
 				Suite_GL_Mexico(transactionRecord, standardLines, customLines, book);
 			} else{
 				// Si es refacturacion no ingresa al proceso
+				/*var _EsReFacturable = transactionRecord.getFieldValue(namefield);
+				nlapiLogExecution('EMERGENCY', '_EsReFacturable' , _EsReFacturable);
+				if (_EsReFacturable=='F' || _EsReFacturable=='f' || _EsReFacturable==false)
+				{*/
 					// Carga los Impuestos a un Arreglo
 					Obtiene_TaxCode_Setup();
 					// Agrega la lineas al GL
@@ -129,6 +154,7 @@ function Obtiene_TaxCode_Setup() {
 				DbolStop = true;
 			}
 		}
+		nlapiLogExecution('EMERGENCY', 'ArrTaxCode' , JSON.stringify(ArrTaxCode));
 	}catch(err){
 		//mx_gl_send_email(' [ Obtiene_TaxCode_Setup ] ' +err, LMRY_script);
 		nlapiLogExecution('ERROR', 'ERROR' , err);
@@ -175,7 +201,7 @@ function Suite_GL_Mexico(transactionRecord, standardLines, customLines, book)
 		if(arrayCuentasGL.length == 0){
 			return true;
 		}
-
+		nlapiLogExecution('EMERGENCY', 'arrayCuentasGL' , JSON.stringify(arrayCuentasGL));
 		// Registro personalizado de Cuentas a redireccionar
 		var savedSearchAccountMapping = nlapiLoadSearch('customrecord_lmry_redirection_accounts', 'customsearch_lmry_redirection_accounts');
 			savedSearchAccountMapping.addFilter(new nlobjSearchFilter('custrecord_lmry_redirectionacc_transacc', null, 'anyof', arrayCuentasGL));
@@ -184,16 +210,23 @@ function Suite_GL_Mexico(transactionRecord, standardLines, customLines, book)
 		var searchresult 	= objResultSet.getResults(0, 1000);
 
 		// Validando lineas de GL Estandard de NetSuite
+		//nlapiLogExecution('EMERGENCY', 'Suite_GL_Mexico - standardLines' , standardLines.getCount());
+		//nlapiLogExecution('EMERGENCY', 'Suite_GL_Mexico - searchresult' , searchresult.length);
+		nlapiLogExecution('EMERGENCY', 'arrayCuentasGL' , JSON.stringify(arrayCuentasGL));
 		for (var countGLNew = 0; countGLNew < standardLines.getCount(); countGLNew++) {
 			var cuentaOrigenStandard = standardLines.getLine(countGLNew).getAccountId();
 			var montoCreditoStandard = standardLines.getLine(countGLNew).getCreditAmount();
 			var montoDebitoStandard  = standardLines.getLine(countGLNew).getDebitAmount();
 			var entityStandard  = standardLines.getLine(countGLNew).getEntityId();
+			//nlapiLogExecution('EMERGENCY', 'LineDatos'+countGLNew , cuentaOrigenStandard+','+montoCreditoStandard+','+montoDebitoStandard+','+entityStandard);
 			if(montoCreditoStandard<=0 && montoDebitoStandard<=0){
 				continue;
 			}
+			//nlapiLogExecution('EMERGENCY', 'cuentaOrigenStandard'+countGLNew , cuentaOrigenStandard);
 			// Obtiene las lineas de la transaccion
 			var TaxCodeStandard  = standardLines.getLine(countGLNew).getTaxItemId();
+			nlapiLogExecution('EMERGENCY', 'searchresult.length' , searchresult.length);
+			nlapiLogExecution('EMERGENCY', 'TaxCodeStandard' , TaxCodeStandard);
 			for(var cuentaNew=0; cuentaNew<searchresult.length; cuentaNew++)
 			{
 				var columnsNew = searchresult[cuentaNew].getAllColumns();
@@ -204,9 +237,16 @@ function Suite_GL_Mexico(transactionRecord, standardLines, customLines, book)
 				var recaccto = '';
 				// Busca la cuenta Standard en el Custom Record
 
+				nlapiLogExecution('EMERGENCY', 'cuentaOrigenStandard 1' , cuentaOrigenStandard);
+				nlapiLogExecution('EMERGENCY', 'AccouMappingOrigen 1' , AccouMappingOrigen);
+				nlapiLogExecution('EMERGENCY', 'TaxCodeStandard 1' , TaxCodeStandard);
+				nlapiLogExecution('EMERGENCY', 'ArrTaxCode 1' , JSON.stringify(ArrTaxCode));
+
+				//nlapiLogExecution('EMERGENCY', 'AccouMappingOrigen' , AccouMappingOrigen+','+cuentaOrigenStandard);
 				if(cuentaOrigenStandard == AccouMappingOrigen)
 				{
-
+					//nlapiLogExecution('EMERGENCY', 'Suite_GL_Mexico - cuentaOrigenStandard, criterioAccMapping' , cuentaOrigenStandard + ' , ' + criterioAccMapping);
+					nlapiLogExecution('EMERGENCY', 'TaxCodeStandard 1' , "GREEN");
 					// Busca los codigo de impuestos
 					var TaxRate  = 0;
 					var TaxClase = '';
@@ -220,10 +260,16 @@ function Suite_GL_Mexico(transactionRecord, standardLines, customLines, book)
 							TaxRate  = parseFloat(ArrTaxCode[x][4]);
 						}
 					}
+					//nlapiLogExecution('EMERGENCY', 'Datos' , criterioAccMapping + ' , ' + TaxClase);
 
 					// Invoice Transacction
 					if (lmryTypeTransaction==7)
 					{
+						nlapiLogExecution('EMERGENCY', 'criterioAccMapping' , criterioAccMapping);
+						nlapiLogExecution('EMERGENCY', 'TaxClase' , TaxClase);
+						nlapiLogExecution('EMERGENCY', 'DIFERENCIA' , (nlapiStringToDate(DueDateRecord,'date')-nlapiStringToDate(TranDateRecord,'date')));
+						nlapiLogExecution('EMERGENCY', 'EsRelacionada' , EsRelacionada);
+						nlapiLogExecution('EMERGENCY', 'EsExtranjero' , EsExtranjero);
 						// 1 - 401.02 Ventas y/o servicios gravados a la tasa general de contado
 						if (criterioAccMapping==1 && TaxClase==1 && (nlapiStringToDate(DueDateRecord,'date')-nlapiStringToDate(TranDateRecord,'date'))<=0 &&
 							(EsRelacionada=='F' || EsRelacionada=='f') && (EsExtranjero=='F' || EsExtranjero =='f'))
@@ -235,7 +281,6 @@ function Suite_GL_Mexico(transactionRecord, standardLines, customLines, book)
 						if (criterioAccMapping==2 && TaxClase==1 && (nlapiStringToDate(DueDateRecord,'date')-nlapiStringToDate(TranDateRecord,'date'))>0 &&
 							(EsRelacionada=='F' || EsRelacionada=='f') && (EsExtranjero=='F' || EsExtranjero =='f'))
 						{
-
 							recaccfr = searchresult[cuentaNew].getValue(columnsNew[3]);
 							recaccto = searchresult[cuentaNew].getValue(columnsNew[4]);
 						}
@@ -382,21 +427,22 @@ function Suite_GL_Mexico(transactionRecord, standardLines, customLines, book)
 							recaccto = searchresult[cuentaNew].getValue(columnsNew[4]);
 						}
 					}
-
+					nlapiLogExecution('EMERGENCY', 'recaccto' , recaccto);
+					nlapiLogExecution('EMERGENCY', 'recaccfr' , recaccfr);
 					// Importe traslado
+					//nlapiLogExecution('EMERGENCY', 'Suite_GL_Mexico - recaccto, recaccfr' , recaccto + ' , ' + recaccfr);
 					if (recaccto!='' && recaccfr!='')
 					{
-						if (feamultibook && featAccountMapping) {	
-								recaccto = devolverCuenta(recaccto, book.getId());
-								recaccfr = devolverCuenta(recaccfr, book.getId());
-						}
-						
+						nlapiLogExecution('ERROR', 'Montos,entityID' , montoDebitoStandard+','+montoCreditoStandard+','+entityID);
+						recaccto = devolverCuenta(recaccto, book.getId());
+						recaccfr = devolverCuenta(recaccfr, book.getId());
+						//nlapiLogExecution('EMERGENCY', 'Suite_GL_Mexico - Departamento, Clase, Location' , Departamento + ' , ' + Clase  + ' , ' + Location);
 						//Creacion de Linea de Cuentas
 						var newLine1 = customLines.addNewLine();
 							newLine1.setAccountId(parseFloat(recaccto));
 							if (montoDebitoStandard!=0 )  { newLine1.setDebitAmount(montoDebitoStandard); }
 							if (montoCreditoStandard!=0 ) { newLine1.setCreditAmount(montoCreditoStandard); }
-							//newLine1.setEntityId(parseInt(entityID));
+							newLine1.setEntityId(parseInt(entityID));
 							newLine1.setClassId(Clase);
 							newLine1.setDepartmentId(Departamento);
 							newLine1.setLocationId(Location);
@@ -406,7 +452,7 @@ function Suite_GL_Mexico(transactionRecord, standardLines, customLines, book)
 							newLine2.setAccountId(parseFloat(recaccfr));
 							if (montoCreditoStandard!=0 ) { newLine2.setDebitAmount(montoCreditoStandard); }
 							if (montoDebitoStandard!=0 )  { newLine2.setCreditAmount(montoDebitoStandard); }
-							//newLine2.setEntityId(parseInt(entityID));
+							newLine2.setEntityId(parseInt(entityID));
 							newLine2.setClassId(Clase);
 							newLine2.setDepartmentId(Departamento);
 							newLine2.setLocationId(Location);
@@ -417,6 +463,8 @@ function Suite_GL_Mexico(transactionRecord, standardLines, customLines, book)
 					}	// Fin If
 				}	// Busca la cuenta Standard en el Custom Record
 			}	// FOR - Obtiene las lineas de la transaccion
+			var remainingUsage = nlapiGetContext().getRemainingUsage();
+			//nlapiLogExecution('EMERGENCY', 'remainingUsage' , remainingUsage);
 		} // FOR - Validando lineas de GL Estandard de NetSuite
 	}catch(err){
 		//mx_gl_send_email(' [ Suite_GL_Mexico ] ' +err, LMRY_script);
