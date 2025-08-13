@@ -1,11 +1,25 @@
-[
-   {
-      "id": "4576702",
-      "tranid": "LWHT 4576702",
-      "trandate": "2024-04-06",
-      "memo": "Latam - WHT ReteFteCompras 2.5%.",
-      "amount": "36554.62",
-      "key": "",
-      "recordType": "vendorbill"
-   }
-]
+{
+   "type": "error.SuiteScriptError",
+   "name": "USER_ERROR",
+   "message": "Please enter value(s) for: Department, Community",
+   "id": "",
+   "stack": [
+      "anonymous(N/serverRecordService)",
+      "calcularIGV(/SuiteBundles/Bundle 37714/Latam_Library/LMRY_PE_IGVNoDomiciliciado_LBRY.js:274)",
+      "afterSubmit(/SuiteBundles/Bundle 37714/LMRY_VendorBillURET_V2.0.js:2296)"
+   ],
+   "cause": {
+      "type": "internal error",
+      "code": "USER_ERROR",
+      "details": "Please enter value(s) for: Department, Community",
+      "userEvent": "aftersubmit",
+      "stackTrace": [
+         "anonymous(N/serverRecordService)",
+         "calcularIGV(/SuiteBundles/Bundle 37714/Latam_Library/LMRY_PE_IGVNoDomiciliciado_LBRY.js:274)",
+         "afterSubmit(/SuiteBundles/Bundle 37714/LMRY_VendorBillURET_V2.0.js:2296)"
+      ],
+      "notifyOff": false
+   },
+   "notifyOff": false,
+   "userFacing": false
+}
