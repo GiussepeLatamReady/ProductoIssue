@@ -1,15 +1,16 @@
 
-# [CP2400485   ]()
+# [D2134   Error en módulo pago de retenciones compras]()
 
 
 ## Description of the Requirement
 
+    El Stlt del preview desde advance massive payament tiene el boton de cancelar que te redirige a un modulo distinto
 
 
 
 ## Description of the solution
 
-
+    
 ## Scripts
 + Create
 
