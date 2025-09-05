@@ -1,118 +1,48 @@
+function validateLocalized(country) {
+        if (!runtime.isFeatureInEffect({ feature: "SUBSIDIARIES" })) {
+            hideLatamFields();
+            return false;
+        }
+        NavigationHistory.setURL(document.referrer);
+        const urlUp = NavigationHistory.findUrl();
+        if (!urlUp) {
+            hideLatamFields();
+            return false;
+        }
 
-const BUNDLE_MAP = {
-    172283: 171494,
-    91304: 91253,
-    254306: 249493,
-    94367: 93009,
-    91306: 91257,
-    99467: 99451,
-    233839: 254106,
-    85269: 87463,
-    265774: 265643,
-    109373: 109364,
-    91215: 91208,
-    164268: 160431,
-    90411: 90408,
-    238689: 238681,
-    447284: 447284,
-    245878: 245872,
-    245925: 245881,
-    247582: 247359,
-    218187: 218153,
-    218184: 218157,
-    233291: 233281,
-    117246: 111360,
-    393323: 387945,
-    249702: 277722,
-    195267: 195265,
-    322538: 294079,
-    126067: 125032,
-    179139: 179119,
-    245636: 243159,
-    158163: 158135,
-    37714: 35754,
-    126263: 125338,
-    429401: 420280,
-    425714: 400033,
-    420621: 409509,
-    188371: 188233,
-    85270: 87462,
-    443292: 439070,
-    424856: 419767,
-    338570: 337228,
-    468331: 453751,
-    456213: 454827
-};
-const files = [
-    "LMRY_EI_libSendingEmailsLBRY_update.js",
-    "LMRY_PE_AnulacionInvoice_LBRY_V2.0.js",
-    "LMRY_EI_MAIN_URET_V2.0.js",
-    "LMRY_EI_Impresion_FileCabinet_STLT.js",
-    "LMRY_EI_AdditionalTools_V2.1.js",
-    "LMRY_MassiveTemplateVersionManagement_URET_v2.0.js",
-    "LMRY_PDF_LBRY_V2.0.js",
-    "LMRY_EI_Impresion_FileCabinet_STLT.js",
-    "LMRY_TemplateVersionManagement_URET_v2.0.js",
-    "LMRY_EI_ITEM_SPLIT_PI.js",
-    "LMRY_EI_MAIN_URET_V2.0.js",
-    "LMRY_Invoicing_Populate_MPRD.js",
-    "LMRY_EI_AR_CO_PE_CL_functions_LBRY_v2.0.js",
-    "LMRY_Purchasing_Populate_MPRD.js",
-    "LMRY_Fulfillment_Receipt_Populate_MPRD.js",
-    "LMRY_CL_EI_OWN_SEND_STLT_V2.0.js",
-    "LMRY_CL_EI_OWN_GENE_STLT_V2.0.js",
-    "LMRY_EI_GENERATE_COUNTRIES.js",
-    "LMRY_EI_SEND_COUNTRIES.js",
-    "LMRY_CO_EI_OWN_SEND_STLT_V2.1.js",
-    "LMRY_CO_EI_OWN_GENE_STLT_V2.1.js",
-    "LMRY_CO_PDF_LBRY_V2.0.js",
-    "LMRY_EI_AR_CO_PE_CL_functions_LBRY_v2.0.js",
-    "LMRY_PA_EI_OWN_SEND_STLT_2.0.js",
-    "LMRY_PA_EI_OWN_GENE_STLT_2.0.js",
-    "LMRY_EI_GENERATE_COUNTRIES.js",
-    "LMRY_EI_SEND_COUNTRIES.js",
-    "LMRY_DO_EI_OWN_SEND_STLT_V2.0.js",
-    "LMRY_DO_EI_OWN_GENE_STLT_V2.0.js",
-    "LMRY_PY_EI_OWN_SEND_STLT_V2.0.js",
-    "LMRY_PY_EI_OWN_GENE_STLT_V2.0.js",
-    "LMRY_PE_EI_OWN_SEND_STLT_V2.0.js",
-    "LMRY_PE_EI_OWN_GENE_STLT_V2.0.js",
-    "LMRY_AR_EI_OWN_SEND_STLT_V2.0.js",
-    "LMRY_AR_EI_OWN_GENE_STLT_V2.0.js",
-    "library_send_ar.js",
-    "library_gene_ar.js",
-    "LMRY_EC_EI_OWN_SEND_STLT_V2.0.js",
-    "LMRY_EC_EI_OWN_GENE_STLT_V2.0.js",
-    "library_send_ec.js",
-    "library_gene_ec.js",
-    "LMRY_MX_EI_OWN_SEND_STLT_V2.0.js",
-    "LMRY_MX_EI_OWN_GENE_STLT_V2.0.js",
-    "LMRY_EI_Conection_handler_LBRY_v2.0.js",
-    "LMRY_EI_MX_functions_LBRY_v2.0.js",
-    "LMRY_MX_Reverse_Cancellation_CLNT_LBRY_V2.1.js",
-    "LMRY_MX_Reverse_Cancellation_CLNT_V2.1.js",
-    "LMRY_EI_MAIN_URET_V2.0.js",
-    "LMRY_UY_EI_OWN_SEND_STLT_V2.0.js",
-    "LMRY_UY_EI_OWN_GENE_STLT_V2.0.js",
-    "LMRY_EI_SEND_COUNTRIES.js",
-    "LMRY_EI_GENERATE_COUNTRIES.js",
-    "LMRY_BR_EI_OWN_GENE_STLT_V2.0.js",
-    "library_send_gt.js",
-    "library_gene_gt.js",
-    "LMRY_GT_EI_OWN_SEND_STLT_2.0.js",
-    "LMRY_EI_GENERATE_COUNTRIES.js",
-    "LMRY_EI_SEND_COUNTRIES.js"
-]
-record.submitFields({
-    type: "customrecord_smc_update_bundles",
-    id: "1",
-    values: {
-        custrecord_smc_filenames: JSON.stringify(files),
-        custrecord_smc_bundles: JSON.stringify(BUNDLE_MAP)
-    },
-    options: {
-        enableSourcing: false,
-        ignoreMandatoryFields: true,
-        disableTriggers: true
+        const { href, searchParams } = new URL(urlUp);
+        let subsidiaryID = searchParams.get(
+            href.includes("subsidiarytype") ? "id" : "subsidiary"
+        );
+
+        if (subsidiaryID && !isLocalized(subsidiaryID, country)) {
+            hideLatamFields();
+        } else if (href.includes("entity")) {
+            const entityID = searchParams.get("id");
+
+            if (entityID) {
+                subsidiaryID = search.lookupFields({
+                    type: search.Type.ENTITY,
+                    id: entityID,
+                    columns: ["subsidiary"],
+                }).subsidiary?.[0]?.value;
+            }
+
+            if (subsidiaryID && !isLocalized(subsidiaryID, country)) {
+                hideLatamFields();
+            }
+        } else if (href.includes("transactions")) {
+            const transactionID = searchParams.get("id");
+            subsidiaryID = search.lookupFields({
+                type: search.Type.TRANSACTION,
+                id: transactionID,
+                columns: ["subsidiary"],
+            }).subsidiary?.[0]?.value;
+            if (subsidiaryID && !isLocalized(subsidiaryID, country)) {
+                hideLatamFields();
+            }
+        }
+
+
+        hideFieldsSAp(subsidiaryID, country);
     }
-});
