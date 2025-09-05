@@ -1,7 +1,8 @@
 let runtime; require(["N/runtime"], function (runt) { runtime = runt; });
-let record; require(["N/record"], function (rec) { record = rec; })
+
 let search; require(["N/search"], function (sear) { search = sear; });
 let query; require(["N/query"], function (que) { query = que; })
+let record; require(["N/record"], function (rec) { record = rec; })
 let currentRecord; require(["N/currentRecord"], function (current) { currentRecord = current; })
 let recordObj = currentRecord.get();
 function isAutomaticPedimentos(idSubsidiary) {
@@ -423,3 +424,13 @@ function mainProcess() {
     }
 }
 mainProcess()
+
+
+let currentRecord; require(["N/currentRecord"], function (current) { currentRecord = current; })
+let recordObj = currentRecord.get();
+
+let recordsave = record.load({
+    id:recordObj.id,
+    type:recordObj.type
+})
+let idrecord = recordsave.save()
