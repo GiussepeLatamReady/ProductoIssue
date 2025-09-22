@@ -1,21 +1,9 @@
 {
-   "type": "error.SuiteScriptError",
-   "name": "SSS_SEARCH_ERROR_OCCURRED",
-   "message": "Search error occurred: Failed to parse SQL [\n select top undefined\n transaction.id,\n transaction.tranid,\n transaction.entity,\n transaction.transactionnumber,\n transaction.currency,\n transaction.exchangerate,\n transactionline.foreignAmount,\n transactionline.netAmount,\n transaction.trandate,\n transaction.memo,\n transaction.custbody_lmry_document_type,\n transactionline.foreignAmountUnpaid,\n transactionline.expenseaccount,\n transaction.custbody_lmry_paymentmethod\n from\n transaction\n inner join transactionline on transactionline.transaction = transaction.id and transactionline.foreignAmountUnpaid > 0 and transactionline.mainline = 'T' and transactionline.subsidiary = 7 and transactionline.expenseaccount = 25 \n inner join vendor on vendor.id = transaction.entity \n where\n transaction.type = 'VendBill'\n and \n transaction.paymenthold = 'F'\n and\n transaction.currency = 7 and \n \n transaction.trandate >= '1/1/2025' and \n transaction.trandate <= '28/8/2025' \n ORDER BY transaction.trandate DESC\n ]: syntax error, state:106(10102) near: undefined(2,24, token code:0)",
-   "id": "",
-   "stack": [
-      "Error\n at Object.getVendorBills (/SuiteScripts/AR_Massive_Payment/LR_WHT_Massive_Payments_Querys.js:272:22)\n at Object.onRequest (/SuiteScripts/AR_Massive_Payment/LR_WHT_Massive_Payments_STLT.js:581:55)"
-   ],
-   "cause": {
-      "type": "internal error",
-      "code": "SSS_SEARCH_ERROR_OCCURRED",
-      "details": "Search error occurred: Failed to parse SQL [\n select top undefined\n transaction.id,\n transaction.tranid,\n transaction.entity,\n transaction.transactionnumber,\n transaction.currency,\n transaction.exchangerate,\n transactionline.foreignAmount,\n transactionline.netAmount,\n transaction.trandate,\n transaction.memo,\n transaction.custbody_lmry_document_type,\n transactionline.foreignAmountUnpaid,\n transactionline.expenseaccount,\n transaction.custbody_lmry_paymentmethod\n from\n transaction\n inner join transactionline on transactionline.transaction = transaction.id and transactionline.foreignAmountUnpaid > 0 and transactionline.mainline = 'T' and transactionline.subsidiary = 7 and transactionline.expenseaccount = 25 \n inner join vendor on vendor.id = transaction.entity \n where\n transaction.type = 'VendBill'\n and \n transaction.paymenthold = 'F'\n and\n transaction.currency = 7 and \n \n transaction.trandate >= '1/1/2025' and \n transaction.trandate <= '28/8/2025' \n ORDER BY transaction.trandate DESC\n ]: syntax error, state:106(10102) near: undefined(2,24, token code:0)",
-      "userEvent": null,
-      "stackTrace": [
-         "Error\n at Object.getVendorBills (/SuiteScripts/AR_Massive_Payment/LR_WHT_Massive_Payments_Querys.js:272:22)\n at Object.onRequest (/SuiteScripts/AR_Massive_Payment/LR_WHT_Massive_Payments_STLT.js:581:55)"
-      ],
-      "notifyOff": false
-   },
-   "notifyOff": false,
-   "userFacing": true
+    "createdfrom": [
+        {
+            "value": "5800591",
+            "text": "Return Authorization #SMX4780"
+        }
+    ],
+    "recordtype": "itemreceipt"
 }
