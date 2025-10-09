@@ -20,11 +20,33 @@ define([
 
         const getInputData = (inputContext) => {
             try {
-                const sales = getTransactions("general");
-                //const purchases = getTransactions("purchases");
-                log.error("transactions",sales)
-                const transactions = sales
-                return transactions;
+                const transactionsIds = [
+                   {
+                        itemfulfillment:5279835,
+                        creditmemo: 5504478
+                   },
+                   {
+                        itemfulfillment:5279835,
+                        creditmemo: 5504596
+                   },
+                   {
+                        itemfulfillment:5289009,
+                        creditmemo: 5504631
+                   },
+                   {
+                        itemfulfillment:5293090,
+                        creditmemo: 5504758
+                   },
+                   {
+                        itemfulfillment:5293090,
+                        creditmemo: 5504871
+                   },
+                   {
+                        itemfulfillment:5293090,
+                        creditmemo: 5504884
+                   },
+                ];
+                return transactionsIds;
             } catch (error) {
                 log.error("Error [getInputData]", error);
                 return [{
@@ -45,13 +67,12 @@ define([
                 });
             } else {
 
-                const data = value;
+                const transactionId = value;
                 try {
-                    if (data["id"]) {
-                        const transaction = lbryWHTHeader.getTransaction(data.id);
-                        const taxResults = lbryWHTHeader.buildTaxResults(transaction);
-                        log.error("transaction [map]",transaction)
-                        log.error("taxResults [map]",taxResults)
+                    if (transactionId) {
+                        const itemfulfillmentId = getFulfillment(transactionId);
+
+                        const pedimentosListids = getPedimentoIds(itemfulfillmentId);
 
                         
                         taxResults.forEach(taxResult => {
@@ -59,7 +80,7 @@ define([
                                 key: taxResult.item.lineuniquekey,
                                 value: {
                                     code: "OK",
-                                    transaction: data,
+                                    transaction: transactionId,
                                     taxResult
                                 }
                             });
@@ -68,14 +89,14 @@ define([
                     }
                 } catch (error) {
                     log.error("Error [map]", error);
-                    log.error("Error [map] data.id", data.id);
-                    data.state = "Error";
+                    log.error("Error [map] data.id", transactionId.id);
+                    transactionId.state = "Error";
                     mapContext.write({
                         key: mapContext.key,
                         value: {
                             code: "ERROR",
                             message: error.message,
-                            transaction: data
+                            transaction: transactionId
                         }
                     });
                 }
@@ -176,51 +197,6 @@ define([
                 log.error('Error [summarize]', error)
             }
 
-        }
-        const getTransactions = (typeProcess) => {
-
-            const internalids = [
-                "4505745",
-                "4345724"
-            ];
-
-            let filters = [
-                ["mainline", "is", "T"],
-                "AND",
-                ["custbody_lmry_reference_transaction", "anyof", internalids],
-                "AND",
-                ["subsidiary.country", "anyof", "CO"]
-            ];
-            
-
-            let columns = [];
-            columns.push(search.createColumn({ name: 'formulatext', formula: '{custbody_lmry_reference_transaction.internalid}', sort: search.Sort.DESC }));
-            columns.push(search.createColumn({ name: 'formulatext', formula: '{subsidiary.id}' }));
-
-
-
-            let searchTransactionsWht = search.create({
-                type: "transaction",
-                filters: filters,
-                columns: columns
-            });
-            let transactions = {};
-            let pageData = searchTransactionsWht.runPaged({ pageSize: 1000 });
-            if (pageData) {
-                pageData.pageRanges.forEach(function (pageRange) {
-                    let page = pageData.fetch({ index: pageRange.index });
-                    page.data.forEach(function (result) {
-                        const id = result.getValue(result.columns[0]);
-                        //const memo = result.getValue(result.columns[1]);
-                        const subsidiary = result.getValue(result.columns[1]);
-
-                        transactions[id] = { id, subsidiary, typeProcess };
-
-                    });
-                });
-            }
-
-            return Object.values(transactions);
         }
 
         const getStartDate = (endDate) => {
