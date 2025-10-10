@@ -22,28 +22,20 @@ define([
             try {
                 const transactionsIds = [
                    {
-                        itemfulfillment:5279835,
-                        creditmemo: 5504478
+                        itemfulfillmentId: 5279835,
+                        creditmemos: ["5504478","5504596"]
                    },
                    {
-                        itemfulfillment:5279835,
-                        creditmemo: 5504596
+                        itemfulfillmentId: 5289009,
+                        creditmemos: ["5504631"]
                    },
                    {
-                        itemfulfillment:5289009,
-                        creditmemo: 5504631
+                        itemfulfillmentId: 5303210,
+                        creditmemos: ["5504758","5504871"]
                    },
                    {
-                        itemfulfillment:5293090,
-                        creditmemo: 5504758
-                   },
-                   {
-                        itemfulfillment:5293090,
-                        creditmemo: 5504871
-                   },
-                   {
-                        itemfulfillment:5293090,
-                        creditmemo: 5504884
+                        itemfulfillmentId: 5311091,
+                        creditmemos: ["5504884"]
                    },
                 ];
                 return transactionsIds;
@@ -67,26 +59,52 @@ define([
                 });
             } else {
 
-                const transactionId = value;
+                const dataObj = value;
                 try {
-                    if (transactionId) {
-                        const itemfulfillmentId = getFulfillment(transactionId);
-
-                        const pedimentosListids = getPedimentoIds(itemfulfillmentId);
-
+                    
                         
-                        taxResults.forEach(taxResult => {
-                            mapContext.write({
-                                key: taxResult.item.lineuniquekey,
-                                value: {
-                                    code: "OK",
-                                    transaction: transactionId,
-                                    taxResult
-                                }
-                            });
-                        });           
+                    dataObj.creditmemos.forEach(transaction => {
+                        const dataTransaction = search.lookupFields({
+                            type: "creditmemo",
+                            id: transaction,
+                            columns: [
+                                'subsidiary',
+                                'createdfrom',
+                                'trandate',
+                                'location'
+                            ]
+                        });
+                        const creditmemo = {
+                            location: dataTransaction['location'][0]?.value,
+                            subsidiary: dataTransaction['subsidiary'][0]?.value
+                        }
+
+                        const items = getItems(transaction, true, "CustCred", creditmemo.location);
+                        items.forEach(itemLine => {
+                            const listPediment = getPedimentos(itemLine.itemid, itemLine.location, itemLine.lote, dataObj.itemfulfillmentId,creditmemo.location);
                             
-                    }
+                        })
+                    })
+                    
+
+                    /*
+
+                    const itemfulfillmentId = getFulfillment(transactionId);
+
+                    const pedimentosListids = getPedimentoIds(itemfulfillmentId);
+
+                    taxResults.forEach(taxResult => {
+                        mapContext.write({
+                            key: taxResult.item.lineuniquekey,
+                            value: {
+                                code: "OK",
+                                transaction: transactionId,
+                                taxResult
+                            }
+                        });
+                    });           
+                    */
+                    
                 } catch (error) {
                     log.error("Error [map]", error);
                     log.error("Error [map] data.id", transactionId.id);
@@ -199,6 +217,250 @@ define([
 
         }
 
+        function getPedimentos(item_id, location_id, lote_id, salesOrderID,locationDefault) {
+
+            if (item_id === null || location_id === null) return [];
+            let Filter_Pedimento = [];
+
+            let Filter_Item = search.createFilter({
+                name: "custrecord_lmry_mx_ped_item",
+                operator: search.Operator.IS,
+                values: item_id,
+            });
+
+            location_id = location_id || locationDefault;
+            
+            if (!salesOrderID) {
+                let Filter_Location = search.createFilter({
+                    name: "custrecord_lmry_mx_ped_location",
+                    operator: search.Operator.IS,
+                    values: location_id,
+                });
+                Filter_Pedimento.push(Filter_Location);
+            }
+
+            Filter_Pedimento.push(Filter_Item);
+
+            if (lote_id) {
+                let Filter_Inventory = search.createFilter({
+                    name: "custrecord_lmry_mx_ped_lote_serie",
+                    operator: search.Operator.ANYOF,
+                    values: lote_id,
+                });
+                Filter_Pedimento.push(Filter_Inventory);
+            }
+
+            if (salesOrderID) {
+                let Filter_Inventory = search.createFilter({
+                    name: "custrecord_lmry_mx_ped_trans",
+                    operator: search.Operator.ANYOF,
+                    values: salesOrderID,
+                });
+                Filter_Pedimento.push(Filter_Inventory);
+            }
+            let search_pedimento_details = search.create({
+                type: "customrecord_lmry_mx_pedimento_details",
+                filters: Filter_Pedimento, 
+                columns: [
+                    search.createColumn({
+                        name: "custrecord_lmry_mx_ped_num",
+                        summary: "GROUP",
+                        label: "Latam - MX Nro Pedimento",
+                    }),
+                    search.createColumn({
+                        name: "custrecord_lmry_mx_ped_quantity",
+                        summary: "SUM",
+                        label: "Latam - MX Pedimento Quantity",
+                    }),
+                    search.createColumn({
+                        name: "custrecord_lmry_mx_ped_date",
+                        summary: "GROUP",
+                        label: "Latam - MX Pedimento Date",
+                        sort: search.Sort.ASC,
+                    }),
+                    search.createColumn({
+                        name: "custrecord_lmry_mx_ped_aduana",
+                        summary: "GROUP",
+                        label: "Latam - MX Aduana",
+                    }),
+                ],
+            });
+
+            let result_pedimento_details = search_pedimento_details
+                .run()
+                .getRange(0, 1000);
+            return result_pedimento_details;
+        }
+        function getItems(shipmentID, isReceipt, type,locationDefault) {
+
+            let FEAT_INVENTORY = runtime.isFeatureInEffect({ feature: "advbinseriallotmgmt" });
+            const listItems = [];
+            //Filtro por transacción
+            let Filter_Trans = search.createFilter({ name: 'internalid', operator: search.Operator.ANYOF, values: shipmentID });
+
+            /* Busqueda personalizada LatamReady - MX Pediment Lines*/
+            // Devuelve las líneas de item de las transacciones que cuentan con check activado de pedimento
+            let search_items_ped = search.load({ id: 'customsearch_lmry_mx_ped_receipt_lines' });
+
+            search_items_ped.filters.push(Filter_Trans);
+            search_items_ped.columns.push(search.createColumn({
+                name: "purchasedescription",
+                join: "item"
+            }));
+            let colFields = search_items_ped.columns;
+            let lastColumn = colFields.length - 1;
+
+            let result_items_ped = search_items_ped.run().getRange(0, 1000);
+            if (result_items_ped.length > 0) {
+                for (let i = 0; i < result_items_ped.length; i++) {
+                    const pedimentoItem = {};
+                    let ITEM_ID = "" + result_items_ped[i].getValue(colFields[5]);
+                    let ITEM_NAME = "" + result_items_ped[i].getText(colFields[5]);
+                    let LOCATION_ID = "" + result_items_ped[i].getValue(colFields[3]);
+                    let INVENTORY_DETAIL = "";
+                    let INVENTORY_NUMBER;
+
+                    if (FEAT_INVENTORY == true || FEAT_INVENTORY == 'T') {
+                        INVENTORY_DETAIL = "" + result_items_ped[i].getValue(colFields[6]);
+                        INVENTORY_NUMBER = "" + result_items_ped[i].getValue(colFields[8]);
+                    }
+
+                    let ITEM_DESCRIPTION = result_items_ped[i].getValue(colFields[lastColumn]) || "";
+                    if (ITEM_DESCRIPTION.length > 300) {
+                        ITEM_DESCRIPTION = ITEM_DESCRIPTION.substring(0, 297) + "...";
+                    }
+                    pedimentoItem.itemid = ITEM_ID;
+
+
+                    if (ITEM_DESCRIPTION != '' && ITEM_DESCRIPTION != null) {
+                        pedimentoItem.itemDescription = ITEM_DESCRIPTION;
+                    }
+                    if (!LOCATION_ID && type != "InvTrnfr") LOCATION_ID = locationDefault;
+                    pedimentoItem.location = LOCATION_ID;
+                    pedimentoItem.date = result_items_ped[i].getValue(colFields[0]);
+
+                    if (INVENTORY_DETAIL != "") {
+                        //Si el item es de tipo lote/serie
+                        if (result_items_ped[i].getValue(colFields[8])) {
+                            pedimentoItem.lote = INVENTORY_NUMBER;
+                        }
+                        pedimentoItem.quantity = result_items_ped[i].getValue(colFields[7]);
+                    } else {
+                        pedimentoItem.quantity = result_items_ped[i].getValue(colFields[4]);
+                    }
+
+                    if (type == "InvTrnfr") {
+                        if (pedimentoItem.location == locationDefault) {
+                            listItems.push(pedimentoItem);
+                        }
+                    }else{
+                        listItems.push(pedimentoItem);
+                    }
+                    
+                }
+            }
+
+            //busqueda pedimentos de tipo kit package
+            let recordShipment;
+            if (type == "InvTrnfr") return listItems;
+            if (type == "CustCred") {
+                recordShipment = record.load({
+                    type: "creditmemo",
+                    id: shipmentID,
+                    isDynamic: false,
+                });
+            }else{
+                recordShipment = record.load({
+                    type: !isReceipt ? search.Type.ITEM_FULFILLMENT : search.Type.ITEM_RECEIPT,
+                    id: shipmentID,
+                    isDynamic: false,
+                });
+            }
+            
+
+            let numItems = recordShipment.getLineCount({ sublistId: "item" });
+            let index = 0;
+            let kitItemxPediment = {};
+            for (let i = 0; i < numItems; i++) {
+
+                const pedimentoItem = {};
+                if (recordShipment.getSublistValue({ sublistId: "item", fieldId: "itemtype", line: i }) === "Kit") {
+                    kitItemxPediment[recordShipment.getSublistValue({ sublistId: 'item', fieldId: 'kitlineid', line: i })] = recordShipment.getSublistText({ sublistId: "item", fieldId: "custcol_lmry_mx_pediment", line: i });
+                }
+                if (recordShipment.getSublistValue({ sublistId: "item", fieldId: "itemtype", line: i }) === "Kit" || recordShipment.getSublistValue({ sublistId: 'item', fieldId: 'kitmemberof', line: i }) === "") continue;
+                if (kitItemxPediment[recordShipment.getSublistValue({ sublistId: 'item', fieldId: 'kitmemberof', line: i })] === "F") continue;
+
+                let trandate = recordShipment.getValue("trandate");
+                let itemID = recordShipment.getSublistValue({ sublistId: 'item', fieldId: 'item', line: i });
+                let location = recordShipment.getSublistValue({ sublistId: 'item', fieldId: 'location', line: i });
+                let quantity = recordShipment.getSublistValue({ sublistId: 'item', fieldId: 'quantity', line: i });
+                let itemDescription = recordShipment.getSublistValue({ sublistId: 'item', fieldId: 'itemdescription', line: i });
+
+                let inventoryDetail = recordShipment.getSublistValue({ sublistId: 'item', fieldId: 'inventorydetail', line: i });
+                if (inventoryDetail) {
+                    let inventorydetailRecord = recordShipment.getSublistSubrecord({ sublistId: 'item', fieldId: 'inventorydetail', line: i });
+                    let cLineas = inventorydetailRecord.getLineCount({ sublistId: 'inventoryassignment' });
+                    for (let j = 0; j < cLineas; j++) {
+                        const pedimentoItema = {};
+                        let lote = inventorydetailRecord.getSublistValue({ sublistId: 'inventoryassignment', fieldId: 'issueinventorynumber', line: j });
+
+                        let loteQuantity = inventorydetailRecord.getSublistValue({ sublistId: 'inventoryassignment', fieldId: 'quantity', line: j });
+                        if (Number(itemID))
+                            pedimentoItema.itemid = itemID;
+
+                        if (itemDescription != null && itemDescription != "") {
+                            if (itemDescription.length > 300) {
+                                itemDescription = itemDescription.substring(0, 297) + "...";
+                            }
+                            pedimentoItema.itemDescription = itemDescription;
+                        }
+
+                        if (Number(location))
+                            pedimentoItema.location = location;
+
+                        if (trandate != null && trandate != "")
+                            pedimentoItema.date = trandate;
+
+                        if (Number(lote))
+                            pedimentoItema.lote = lote;
+
+                        if (Number(loteQuantity)) {
+                            pedimentoItema.quantity = Math.round(loteQuantity);
+
+                        } else {
+                            pedimentoItema.quantity = Math.round(quantity);
+
+                        }
+                        listItems.push(pedimentoItema);
+                    }
+                } else {
+                    if (Number(itemID))
+                        pedimentoItem.itemid = itemID;
+
+                    if (itemDescription != null && itemDescription != "") {
+                        if (itemDescription.length > 300) {
+                            itemDescription = itemDescription.substring(0, 297) + "...";
+                        }
+                        pedimentoItem.itemDescription = itemDescription;
+                    }
+
+                    if (Number(location))
+                        pedimentoItem.location = location;
+
+                    if (trandate != null && trandate != "")
+                        pedimentoItem.date = trandate;
+
+                    // if (Number(lote))
+                    //     SubTabla.setSublistValue({ id: 'custpage_lote', line: index, value: loteText });
+                    if (Number(quantity))
+                        pedimentoItem.quantity = Math.round(quantity);
+                    listItems.push(pedimentoItem);
+
+                }
+
+            }
+            return listItems;
+        }
         const getStartDate = (endDate) => {
             const year = endDate.getFullYear()
             let startDate;
