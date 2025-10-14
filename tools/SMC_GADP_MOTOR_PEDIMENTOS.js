@@ -11,32 +11,33 @@ define([
     "N/runtime",
     "N/search",
     "N/log",
-    './CO_Library_Mensual/SMC_CO_Header_WHT_calculation_LBRY_V2.1',
     "N/format"
 ],
 
-    (record, runtime, search, log, lbryWHTHeader, format) => {
+    (record, runtime, search, log, format) => {
 
 
         const getInputData = (inputContext) => {
             try {
                 const transactionsIds = [
-                   {
+                    {
                         itemfulfillmentId: 5279835,
-                        creditmemos: ["5504478","5504596"]
-                   },
-                   {
-                        itemfulfillmentId: 5289009,
-                        creditmemos: ["5504631"]
-                   },
-                   {
-                        itemfulfillmentId: 5303210,
-                        creditmemos: ["5504758","5504871"]
-                   },
-                   {
-                        itemfulfillmentId: 5311091,
-                        creditmemos: ["5504884"]
-                   },
+                        creditmemos: ["5504478", "5504596"]
+                    }
+                    
+                    // ,
+                    // {
+                    //     itemfulfillmentId: 5289009,
+                    //     creditmemos: ["5504631"]
+                    // },
+                    // {
+                    //     itemfulfillmentId: 5303210,
+                    //     creditmemos: ["5504758", "5504871"]
+                    // },
+                    // {
+                    //     itemfulfillmentId: 5311091,
+                    //     creditmemos: ["5504884"]
+                    // },
                 ];
                 return transactionsIds;
             } catch (error) {
@@ -51,7 +52,7 @@ define([
         const map = (mapContext) => {
 
             const value = JSON.parse(mapContext.value);
-            log.error("value [map]",value)
+            log.error("value [map]", value)
             if (value.code === "ERROR") {
                 mapContext.write({
                     key: value.code,
@@ -61,8 +62,15 @@ define([
 
                 const dataObj = value;
                 try {
-                    
-                        
+
+                    const itemsFulfillment = getItems(dataObj.itemfulfillmentId, false);
+                    const itemids = itemsFulfillment.map(item => item.itemid);
+                    const pedimentosByItem = getPedimentos_test(itemids, dataObj.itemfulfillmentId);
+
+                    log.error("pedimentosByItem",pedimentosByItem)
+
+                    const pedimentoDetails = [];
+                    let count = 10000;
                     dataObj.creditmemos.forEach(transaction => {
                         const dataTransaction = search.lookupFields({
                             type: "creditmemo",
@@ -80,12 +88,68 @@ define([
                         }
 
                         const items = getItems(transaction, true, "CustCred", creditmemo.location);
-                        items.forEach(itemLine => {
-                            const listPediment = getPedimentos(itemLine.itemid, itemLine.location, itemLine.lote, dataObj.itemfulfillmentId,creditmemo.location);
+                        
+                        log.error("items",items.slice(0,5));
+                        items.forEach(item => {
+                            log.error("item.itemid",item.itemid);
+                            const pedimentoList = pedimentosByItem[item.itemid];
+
+                            for (let i = 0; i < pedimentoList.length; i++) {
+                                const pedimento = pedimentoList[i];
+                                if (pedimento.quantity == item.quantity) {
+                                    count++;
+                                    pedimento.quantity = 0;
+                                    const pedimentoUnit = {
+                                        id: count + " "+transaction,
+                                        custrecord_lmry_mx_ped_trans: transaction,
+                                        custrecord_lmry_date: "14/10/2025",
+                                        custrecord_lmry_mx_ped_num: pedimento.num,
+                                        custrecord_lmry_mx_ped_date: pedimento.dat,
+                                        custrecord_lmry_mx_ped_item: item.itemid,
+                                        custrecord_lmry_mx_ped_location: creditmemo.location,
+                                        custrecord_lmry_mx_ped_quantity: item.quantity,
+                                        custrecord_lmry_transaction_id: transaction,
+                                        custrecord_lmry_mx_ped_observ: "LR_ADJUSTMENT"
+                                    }
+                                    pedimentoDetails.push(pedimentoUnit);
+                                    break;
+                                }
+                                if (pedimento.quantity > item.quantity) {
+                                    count++;
+                                    pedimento.quantity -= item.quantity;
+                                    const pedimentoUnit = {
+                                        id: count + " "+transaction,
+                                        custrecord_lmry_mx_ped_trans: transaction,
+                                        custrecord_lmry_date: "14/10/2025",
+                                        custrecord_lmry_mx_ped_num: pedimento.num,
+                                        custrecord_lmry_mx_ped_date: pedimento.dat,
+                                        custrecord_lmry_mx_ped_item: item.itemid,
+                                        custrecord_lmry_mx_ped_location: creditmemo.location,
+                                        custrecord_lmry_mx_ped_quantity: item.quantity,
+                                        custrecord_lmry_transaction_id: transaction,
+                                        custrecord_lmry_mx_ped_observ: "LR_ADJUSTMENT"
+                                    }
+                                    pedimentoDetails.push(pedimentoUnit);
+                                    break;
+                                }
+                                if (pedimento.quantity < item.quantity) {
+                                    log.error("Pedimento no creado","pedimento es menor a la cantidad requerida")
+                                }
+                            }
                             
                         })
                     })
-                    
+
+                    pedimentoDetails.forEach(pedimento => {
+                        mapContext.write({
+                            key: mapContext.key,
+                            value: {
+                                code: "OK",
+                                pedimento,
+                                transactionId: dataObj.itemfulfillmentId
+                            }
+                        });
+                    });
 
                     /*
 
@@ -104,9 +168,10 @@ define([
                         });
                     });           
                     */
-                    
+
                 } catch (error) {
                     log.error("Error [map]", error);
+                    log.error("Error [map] stack", error.stack);
                     log.error("Error [map] data.id", transactionId.id);
                     transactionId.state = "Error";
                     mapContext.write({
@@ -114,7 +179,7 @@ define([
                         value: {
                             code: "ERROR",
                             message: error.message,
-                            transaction: transactionId
+                            transactionId: transactionId
                         }
                     });
                 }
@@ -127,11 +192,10 @@ define([
 
             const { values, key } = reduceContext;
             const data = values.map(value => JSON.parse(value));
-            log.error("data [reduce]",data)
+            log.error("data [reduce]", data)
             if (data[0].code == "ERROR") {
-                data[0].transaction.state = "Error";
                 reduceContext.write({
-                    key: data[0].transaction.id,
+                    key: data[0].transactionId,
                     value: {
                         code: "ERROR",
                         message: data[0].message,
@@ -140,28 +204,30 @@ define([
                 });
             } else {
                 try {
-                    log.error("transaction id",data[0].transaction.id)
-                    data.forEach(({ taxResult }) => {
-                        lbryWHTHeader.createTaxResult(taxResult);
+                    log.error("Item fullfilment", data[0].transactionId)
+                    log.error("pedimentosIDs", data.map(obj => obj.pedimento.id))
+                    data.forEach(({ pedimento }) => {
+                        log.error("pedimento", pedimento)
+                        createPedimentoDetail(pedimento);
                     });
-                    data[0].transaction.state = "Procesada con exito";
+                    /*
                     reduceContext.write({
-                        key: data[0].transaction.id,
+                        key: data[0].transactionId,
                         value: {
                             code: "OK",
-                            transaction: data[0].transaction
+                            transaction: data[0].transactionId
                         }
-                    });
+                    });*/
                 } catch (error) {
                     log.error('Error [REDUCE]', error)
                     log.error('Error [REDUCE] id ', data[0].transaction.id)
                     data[0].transaction.state = "Error";
                     reduceContext.write({
-                        key: data[0].transaction.id,
+                        key: data[0].transactionId,
                         value: {
                             code: "ERROR",
                             message: error.message,
-                            transaction: data[0].transaction
+                            transaction: data[0].transactionId
                         }
                     });
                 }
@@ -185,8 +251,8 @@ define([
             });
 
             try {
-                log.error("data [summarize]",data)
-                log.error("transactionIDs [summarize]",transactionIDs)
+                log.error("data [summarize]", data)
+                log.error("transactionIDs [summarize]", transactionIDs)
                 //Agrupar transacciones
                 const groupedTransactions = data.reduce((transactions, element) => {
 
@@ -208,7 +274,7 @@ define([
                         createRecordLog(transactions, "Ocurrió un error", message)
                         //}
                     } else {
-                        createRecordLog(transactions, "Finalizado", 'Las transacciones han sido procesadas con exito') 
+                        createRecordLog(transactions, "Finalizado", 'Las transacciones han sido procesadas con exito')
                     }
                 });
             } catch (error) {
@@ -217,7 +283,7 @@ define([
 
         }
 
-        function getPedimentos(item_id, location_id, lote_id, salesOrderID,locationDefault) {
+        function getPedimentos(item_id, location_id, lote_id, salesOrderID, locationDefault) {
 
             if (item_id === null || location_id === null) return [];
             let Filter_Pedimento = [];
@@ -229,7 +295,7 @@ define([
             });
 
             location_id = location_id || locationDefault;
-            
+
             if (!salesOrderID) {
                 let Filter_Location = search.createFilter({
                     name: "custrecord_lmry_mx_ped_location",
@@ -260,7 +326,7 @@ define([
             }
             let search_pedimento_details = search.create({
                 type: "customrecord_lmry_mx_pedimento_details",
-                filters: Filter_Pedimento, 
+                filters: Filter_Pedimento,
                 columns: [
                     search.createColumn({
                         name: "custrecord_lmry_mx_ped_num",
@@ -291,7 +357,79 @@ define([
                 .getRange(0, 1000);
             return result_pedimento_details;
         }
-        function getItems(shipmentID, isReceipt, type,locationDefault) {
+
+        function getPedimentos_test(listItems, itemfulfillmentId) {
+
+            if (!listItems.length) return {};
+            let Filter_Pedimento = [];
+
+            let Filter_Item = search.createFilter({
+                name: "custrecord_lmry_mx_ped_item",
+                operator: search.Operator.ANYOF,
+                values: listItems,
+            });
+
+            Filter_Pedimento.push(Filter_Item);
+
+            if (itemfulfillmentId) {
+                let Filter_Inventory = search.createFilter({
+                    name: "custrecord_lmry_mx_ped_trans",
+                    operator: search.Operator.ANYOF,
+                    values: itemfulfillmentId,
+                });
+                Filter_Pedimento.push(Filter_Inventory);
+            }
+            const pedimentosByItem = {};
+            search.create({
+                type: "customrecord_lmry_mx_pedimento_details",
+                filters: Filter_Pedimento,
+                columns: [
+                    search.createColumn({
+                        name: "custrecord_lmry_mx_ped_num",
+                        summary: "GROUP",
+                        label: "Latam - MX Nro Pedimento",
+                    }),
+                    search.createColumn({
+                        name: "custrecord_lmry_mx_ped_quantity",
+                        summary: "SUM",
+                        label: "Latam - MX Pedimento Quantity",
+                    }),
+                    search.createColumn({
+                        name: "custrecord_lmry_mx_ped_date",
+                        summary: "GROUP",
+                        label: "Latam - MX Pedimento Date",
+                        sort: search.Sort.ASC,
+                    }),
+                    search.createColumn({
+                        name: "custrecord_lmry_mx_ped_aduana",
+                        summary: "GROUP",
+                        label: "Latam - MX Aduana",
+                    }),
+                    search.createColumn({
+                        name: "custrecord_lmry_mx_ped_item",
+                        summary: "GROUP",
+                        label: "Latam - MX Pedimento Item",
+                    })
+                ],
+            }).run().each(result => {
+                const { columns, getValue } = result;
+                const pedimento = {
+                    num: getValue(columns[0]),
+                    quantity: Math.abs(Number(getValue(columns[1]))),
+                    dat: getValue(columns[2]),
+                    aduana: getValue(columns[3]),
+                    item: getValue(columns[4]),
+                }
+                if (!pedimentosByItem[pedimento.item]) {
+                    pedimentosByItem[pedimento.item] = [];
+                }
+                pedimentosByItem[pedimento.item].push(pedimento);
+                return true;
+            });
+
+            return pedimentosByItem;
+        }
+        function getItems(shipmentID, isReceipt, type, locationDefault) {
 
             let FEAT_INVENTORY = runtime.isFeatureInEffect({ feature: "advbinseriallotmgmt" });
             const listItems = [];
@@ -353,10 +491,10 @@ define([
                         if (pedimentoItem.location == locationDefault) {
                             listItems.push(pedimentoItem);
                         }
-                    }else{
+                    } else {
                         listItems.push(pedimentoItem);
                     }
-                    
+
                 }
             }
 
@@ -369,14 +507,14 @@ define([
                     id: shipmentID,
                     isDynamic: false,
                 });
-            }else{
+            } else {
                 recordShipment = record.load({
                     type: !isReceipt ? search.Type.ITEM_FULFILLMENT : search.Type.ITEM_RECEIPT,
                     id: shipmentID,
                     isDynamic: false,
                 });
             }
-            
+
 
             let numItems = recordShipment.getLineCount({ sublistId: "item" });
             let index = 0;
@@ -535,6 +673,17 @@ define([
             return parseDate;
         }
 
-        return { getInputData, map, reduce, summarize }
+        const createPedimentoDetail = (pedimento) => {
+            let ped_details = record.create({ type: 'customrecord_lmry_mx_pedimento_details', isDynamic: true });
+
+            for (const fieldId in pedimento) {
+                const value = pedimento[fieldId];
+                if (value && fieldId != "id") ped_details.setValue({fieldId,value});
+            }
+            //ped_details.save();
+
+        }
+
+        return { getInputData, map, reduce }
 
     });
