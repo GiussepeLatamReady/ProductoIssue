@@ -24,7 +24,7 @@ define([
                         itemfulfillmentId: 5279835,
                         creditmemos: ["5504478", "5504596"]
                     }
-                    
+
                     // ,
                     // {
                     //     itemfulfillmentId: 5289009,
@@ -61,13 +61,15 @@ define([
             } else {
 
                 const dataObj = value;
+                log.error("dataObj", dataObj)
                 try {
 
                     const itemsFulfillment = getItems(dataObj.itemfulfillmentId, false);
+                    log.error("itemsFulfillment", itemsFulfillment.length)
                     const itemids = itemsFulfillment.map(item => item.itemid);
                     const pedimentosByItem = getPedimentos_test(itemids, dataObj.itemfulfillmentId);
 
-                    log.error("pedimentosByItem",pedimentosByItem)
+                    //log.error("pedimentosByItem", pedimentosByItem)
 
                     const pedimentoDetails = [];
                     let count = 10000;
@@ -83,63 +85,91 @@ define([
                             ]
                         });
                         const creditmemo = {
+                            id:transaction,
                             location: dataTransaction['location'][0]?.value,
                             subsidiary: dataTransaction['subsidiary'][0]?.value
                         }
-
+                        log.error("creditmemo "+ transaction, creditmemo);
                         const items = getItems(transaction, true, "CustCred", creditmemo.location);
-                        
-                        log.error("items",items.slice(0,5));
-                        items.forEach(item => {
-                            log.error("item.itemid",item.itemid);
-                            const pedimentoList = pedimentosByItem[item.itemid];
 
+                        log.error("items muestra", items.slice(0, 5));
+                        log.error("items cantidad", items.length);
+
+                       
+                        log.error("items muestra 41352 "+ transaction, items.filter(item => item.itemid == "41352"));
+                        
+                        for (let i = 0; i < items.length; i++) {
+                            const item = items[i];
+                            //log.error("item.itemid", item.itemid);
+                            const pedimentoList = pedimentosByItem[item.itemid];
+                            if (item.itemid == "41352") {
+                                log.error("pedimentoList 41352", pedimentoList);
+                            }
+                            if (!pedimentoList) continue;
                             for (let i = 0; i < pedimentoList.length; i++) {
                                 const pedimento = pedimentoList[i];
-                                if (pedimento.quantity == item.quantity) {
+                                if (Number(pedimento.quantity) == Number(item.quantity)) {
                                     count++;
                                     pedimento.quantity = 0;
                                     const pedimentoUnit = {
-                                        id: count + " "+transaction,
+                                        id: count + " " + transaction,
                                         custrecord_lmry_mx_ped_trans: transaction,
-                                        custrecord_lmry_date: "14/10/2025",
+                                        custrecord_lmry_date: formatDate(item.date),
                                         custrecord_lmry_mx_ped_num: pedimento.num,
-                                        custrecord_lmry_mx_ped_date: pedimento.dat,
+                                        custrecord_lmry_mx_ped_date: formatDate(pedimento.dat),
                                         custrecord_lmry_mx_ped_item: item.itemid,
                                         custrecord_lmry_mx_ped_location: creditmemo.location,
-                                        custrecord_lmry_mx_ped_quantity: item.quantity,
+                                        custrecord_lmry_mx_ped_quantity: Number(item.quantity),
                                         custrecord_lmry_transaction_id: transaction,
-                                        custrecord_lmry_mx_ped_observ: "LR_ADJUSTMENT"
+                                        custrecord_lmry_mx_ped_observ: "LR_ADJUSTMENT",
+                                        type:"Total"
                                     }
                                     pedimentoDetails.push(pedimentoUnit);
                                     break;
                                 }
-                                if (pedimento.quantity > item.quantity) {
+                                if (Number(pedimento.quantity) > Number(item.quantity)) {
                                     count++;
-                                    pedimento.quantity -= item.quantity;
+                                    pedimento.quantity -= Number(item.quantity);
                                     const pedimentoUnit = {
-                                        id: count + " "+transaction,
+                                        id: count + " " + transaction,
                                         custrecord_lmry_mx_ped_trans: transaction,
-                                        custrecord_lmry_date: "14/10/2025",
+                                        custrecord_lmry_date: formatDate(item.date),
                                         custrecord_lmry_mx_ped_num: pedimento.num,
-                                        custrecord_lmry_mx_ped_date: pedimento.dat,
+                                        custrecord_lmry_mx_ped_date: formatDate(pedimento.dat),
                                         custrecord_lmry_mx_ped_item: item.itemid,
                                         custrecord_lmry_mx_ped_location: creditmemo.location,
-                                        custrecord_lmry_mx_ped_quantity: item.quantity,
+                                        custrecord_lmry_mx_ped_quantity: Number(item.quantity),
                                         custrecord_lmry_transaction_id: transaction,
-                                        custrecord_lmry_mx_ped_observ: "LR_ADJUSTMENT"
+                                        custrecord_lmry_mx_ped_observ: "LR_ADJUSTMENT",
+                                        type:"Pedimentos mayor a transaccion",
+                                        pedimento_restante:pedimento.quantity
                                     }
                                     pedimentoDetails.push(pedimentoUnit);
                                     break;
                                 }
-                                if (pedimento.quantity < item.quantity) {
-                                    log.error("Pedimento no creado","pedimento es menor a la cantidad requerida")
+                                if (Number(pedimento.quantity) < Number(item.quantity) && Number(pedimento.quantity) > 0 ) {
+                                    count++;
+                                    
+                                    const pedimentoUnit = {
+                                        id: count + " " + transaction,
+                                        custrecord_lmry_mx_ped_trans: transaction,
+                                        custrecord_lmry_date: formatDate(item.date),
+                                        custrecord_lmry_mx_ped_num: pedimento.num,
+                                        custrecord_lmry_mx_ped_date: formatDate(pedimento.dat),
+                                        custrecord_lmry_mx_ped_item: item.itemid,
+                                        custrecord_lmry_mx_ped_location: creditmemo.location,
+                                        custrecord_lmry_mx_ped_quantity: pedimento.quantity,
+                                        custrecord_lmry_transaction_id: transaction,
+                                        custrecord_lmry_mx_ped_observ: "LR_ADJUSTMENT",
+                                        type:"Pedimentos menor a transaccion"
+                                    }
+                                    pedimento.quantity = 0;
+                                    pedimentoDetails.push(pedimentoUnit);
                                 }
                             }
-                            
-                        })
+                        }
                     })
-
+                    log.error("pedimentoDetails",pedimentoDetails.length)
                     pedimentoDetails.forEach(pedimento => {
                         mapContext.write({
                             key: mapContext.key,
@@ -192,7 +222,7 @@ define([
 
             const { values, key } = reduceContext;
             const data = values.map(value => JSON.parse(value));
-            log.error("data [reduce]", data)
+            // log.error("data [reduce]", data)
             if (data[0].code == "ERROR") {
                 reduceContext.write({
                     key: data[0].transactionId,
@@ -358,7 +388,7 @@ define([
             return result_pedimento_details;
         }
 
-        function getPedimentos_test(listItems, itemfulfillmentId) {
+        function getPedimentos_test(listItems, itemfulfillmentId, location_id) {
 
             if (!listItems.length) return {};
             let Filter_Pedimento = [];
@@ -370,6 +400,15 @@ define([
             });
 
             Filter_Pedimento.push(Filter_Item);
+            if (location_id) {
+                let Filter_Location = search.createFilter({
+                    name: "custrecord_lmry_mx_ped_location",
+                    operator: search.Operator.IS,
+                    values: location_id,
+                });
+                Filter_Pedimento.push(Filter_Location);
+            }
+
 
             if (itemfulfillmentId) {
                 let Filter_Inventory = search.createFilter({
@@ -438,7 +477,42 @@ define([
 
             /* Busqueda personalizada LatamReady - MX Pediment Lines*/
             // Devuelve las líneas de item de las transacciones que cuentan con check activado de pedimento
-            let search_items_ped = search.load({ id: 'customsearch_lmry_mx_ped_receipt_lines' });
+            let search_items_ped = search.create({
+                type: "transaction",
+                settings: [{ "name": "consolidationtype", "value": "NONE" }],
+                filters:
+                    [
+                        ["type", "anyof", "ItemShip", "ItemRcpt", "InvAdjst", "InvTrnfr"],
+                        "AND",
+                        ["custcol_lmry_mx_pediment", "is", "T"],
+                        "AND",
+                        ["item.type", "noneof", "Kit"]
+                    ],
+                columns:
+                    [
+                        search.createColumn({ name: "trandate", label: "Date" }),
+                        search.createColumn({ name: "type", label: "Type" }),
+                        search.createColumn({ name: "tranid", label: "Document Number" }),
+                        search.createColumn({ name: "location", label: "Location" }),
+                        search.createColumn({ name: "quantity", label: "Quantity" }),
+                        search.createColumn({ name: "item", label: "Item" }),
+                        search.createColumn({
+                            name: "internalid",
+                            join: "inventoryDetail",
+                            label: "Internal ID"
+                        }),
+                        search.createColumn({
+                            name: "quantity",
+                            join: "inventoryDetail",
+                            label: "Quantity"
+                        }),
+                        search.createColumn({
+                            name: "inventorynumber",
+                            join: "inventoryDetail",
+                            label: " Number"
+                        })
+                    ]
+            });
 
             search_items_ped.filters.push(Filter_Trans);
             search_items_ped.columns.push(search.createColumn({
@@ -673,14 +747,19 @@ define([
             return parseDate;
         }
 
+        const formatDate2 = (date) => {
+            let parseDate = format.parse({ value: date, type: format.Type.DATE });
+            //parseDate = format.format({ type: format.Type.DATE, value: parseDate });
+            return parseDate;
+        }
+
         const createPedimentoDetail = (pedimento) => {
             let ped_details = record.create({ type: 'customrecord_lmry_mx_pedimento_details', isDynamic: true });
-
             for (const fieldId in pedimento) {
-                const value = pedimento[fieldId];
-                if (value && fieldId != "id") ped_details.setValue({fieldId,value});
+                const value = fieldId == "custrecord_lmry_date" || fieldId == "custrecord_lmry_mx_ped_date" ? formatDate2(pedimento[fieldId]) : pedimento[fieldId];
+                if (value && (fieldId != "id"&& fieldId != "type"&& fieldId != "pedimento_restante")) ped_details.setValue({ fieldId, value });
             }
-            //ped_details.save();
+            ped_details.save();
 
         }
 
