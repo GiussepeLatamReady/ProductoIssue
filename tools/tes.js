@@ -66,6 +66,7 @@ function getItems(recordObj) {
     var listItems = [];
 
     var numItems = recordShipment.getLineCount({ sublistId: "item" });
+    console.log("numItems",numItems)
     var kitItemxPediment = {};
     for (var i = 0; i < numItems; i++) {
         var pedimentoItem = {};
@@ -250,6 +251,7 @@ function getItems(recordObj) {
         }
 
     }
+    console.log("listItems",listItems)
     return listItems;
 }
 function getPedimentos(item_id, location_id, lote_id, isFifo) {
@@ -409,7 +411,7 @@ function mainProcess() {
             }
 
             const mensaje = isValidItemsTransaction(recordObj);
-            console.log("mensaje:", mensaje)
+            //console.log("mensaje:", mensaje)
             if (mensaje !== "ok") {
                 translateAlert(mensaje);
                 if (mensaje.indexOf('Error') !== -1) {
