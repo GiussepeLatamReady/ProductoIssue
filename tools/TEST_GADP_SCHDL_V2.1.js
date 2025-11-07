@@ -14,71 +14,88 @@
  */
 define([
     'N/file',
-    "N/search", 
-    "N/record", 
-    "N/log", 
-    "N/query", 
+    "N/search",
+    "N/record",
+    "N/log",
+    "N/query",
     "N/runtime"
 ],
-    function (file,search, record, log, query, runtime,libryVoidItemReceipt) {
+    function (file, search, record, log, query, runtime, libryVoidItemReceipt) {
 
         function execute(Context) {
             // ID de la transacción que deseas duplicar
             try {
                 //deleteAllRecord();
-                loadcsv();
+                createExpenseReport();
             } catch (error) {
                 log.error("error", error)
             }
 
         }
 
-        const loadcsv = () => {
-            const csvFile = file.load({
-                id: '3918704'
-            });
+        const createExpenseReport = () => {
+            const obj_bill = record.copy({ type: 'expensereport', id: "4355823", isDynamic: false });
+            const totalItems = obj_bill.getLineCount({ sublistId: 'expense' });
+            log.error("totalItems", totalItems);
+            var count = totalItems;
+            var arrEntity = ["4457","4940"];
+            var serie = 0;
+            for (let c = count; c < 10; c++) {
+                const indice = Math.round(Math.random() * 2);
+                serie++;
+                var seriecompl = CompletarCero(5,serie);
+                obj_bill.insertLine({ sublistId: 'expense', line: c });
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'amount', line: c, value: Math.random() * 10000 });
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'category', line: c, value: "5" });
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'class', line: c, value: "2" });
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'department', line: c, value: "1" });
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'location', line: c, value: "6" });
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'currency', line: c, value: "5" });
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'taxcode', line: c, value: "4583" });
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'custcol_lmry_exp_rep_num_doc', line: c, value: seriecompl });
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'custcol_lmry_exp_rep_serie_doc', line: c, value: "G0"+seriecompl});
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'custcol_lmry_exp_rep_type_doc', line: c, value: "312" });
+                obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'custcol_lmry_exp_rep_vendor_colum', line: c, value: arrEntity[indice]});
+            }
 
-            const csvContent = csvFile.getContents();
-            log.error("csvContent",csvContent)
-            parseCsvToArray(csvContent)
+            const expenseId = obj_bill.save();
+            log.error("expenseId", `https://tstdrv1774174.app.netsuite.com/app/accounting/transactions/exprept.nl?id=${expenseId}`)
         }
 
-        const parseCsvToArray = (csvText) => {
-            // Separa el contenido en líneas (considerando diferentes saltos de línea)
-            let lines = csvText.split(/\r\n|\n/);
-            let result = [];
-            
-            if (lines.length === 0) {
-                return result;
-            }
-            
-            // La primera línea contiene los encabezados
-            let headers = lines[0].split(',');
-            
-            // Recorre las líneas restantes
-            for (let i = 1; i < lines.length; i++) {
-                let line = lines[i].trim();
-                // Si la línea está vacía, la omite
-                if (line === '') {
-                    continue;
+        function CompletarCero(tamano, valor) {
+            var strValor = valor + '';
+            var lengthStrValor = strValor.length;
+            var nuevoValor = valor + '';
+
+            if (lengthStrValor <= tamano) {
+                if (tamano != lengthStrValor) {
+                    for (var i = lengthStrValor; i < tamano; i++) {
+                        nuevoValor = '0' + nuevoValor;
+                    }
                 }
-                
-                // Separa los valores de la línea
-                let values = line.split(',');
-                let obj = {};
-                
-                // Crea un objeto asignando cada valor a su respectivo encabezado
-                for (let j = 0; j < headers.length; j++) {
-                    // Si lo deseas, aquí puedes transformar el nombre de la propiedad
-                    // Ejemplo: headers[j].trim().toLowerCase() para usar minúsculas
-                    obj[ headers[j].trim() ] = values[j] ? values[j].trim() : '';
-                }
-                
-                result.push(obj);
+                return nuevoValor;
+            } else {
+                return nuevoValor.substring(0, tamano);
             }
-            log.error("result",result)
-            return result;
         }
+
+        function CompletarCero2(tamano, valor) {
+            var strValor = valor + '';
+            var lengthStrValor = strValor.length;
+            var nuevoValor = valor + '';
+
+            if (lengthStrValor <= tamano) {
+                if (tamano != lengthStrValor) {
+                    for (var i = lengthStrValor; i < tamano; i++) {
+                        nuevoValor = '0' + nuevoValor;
+                    }
+                }
+                return nuevoValor;
+            } else {
+                return nuevoValor.substring(0, tamano);
+            }
+        }
+        
 
         return {
             execute: execute

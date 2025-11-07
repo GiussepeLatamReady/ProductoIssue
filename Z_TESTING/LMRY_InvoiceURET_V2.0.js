@@ -33,7 +33,7 @@ define(['./Latam_Library/LMRY_UniversalSetting_LBRY', './Latam_Library/LMRY_Hide
   './Latam_Library/LMRY_BR_UPDATE_Flete_Transaction_Field_LBRY_2.0', './WTH_Library/LMRY_BO_Taxes_LBRY_V2.0',
   './Latam_Library/LMRY_PE_STE_Sales_Tax_Transaction_LBRY_V2.0', './WTH_Library/LMRY_CR_STE_WhtTransactionOnSalesByTotal_LBRY_V2.0',
   './Latam_Library/LMRY_Custom_ExchangeRate_Field_LBRY_V2.0.js', './Latam_Library/LMRY_second_Entity_LBRY_V2.0', './Latam_Library/LMRY_Custom_ExchangeRate_LBRY_V2.0.js',
-  './Latam_Library/LMRY_BR_Redirect_Payments_LBRY_V2.0',"N/suiteAppInfo"
+  './Latam_Library/LMRY_BR_Redirect_Payments_LBRY_V2.0',"N/suiteAppInfo",'./Latam_Library/LMRY_BoletoBancario_Fields_LBRY_V2.0'
 ],
 
   function (library_Uni_Setting, library_hideview3, Library_BoletoBancario, Library_Mail, Library_Number,
@@ -45,7 +45,7 @@ define(['./Latam_Library/LMRY_UniversalSetting_LBRY', './Latam_Library/LMRY_Hide
     MX_ST_WhtLibrary_Total, AR_ST_TaxLibrary, LibraryValidatePeriod, library_PE_Detraction, AR_ST_PerceptionLibrary,
     AR_ST_TransFields, PA_ST_TaxLibrary, libraryTaxWithholding, library_BR_minimum, TaxWithholdingSales, LibraryTransferIvaSubtype, libTools,
     libraryFleteGlobales, libBoTaxes, PE_STE_TaxLibrary, CR_STE_WhtLibrary_Total, Library_ExchangeRate_Field, librarySecondClient, Library_ExchangeRate,
-    Library_RedirecPayment,suiteAppInfo) {
+    Library_RedirecPayment,suiteAppInfo,Library_BoletoBancario_Field) {
 
     /**
      * Variable Universal del Registro personalizado
@@ -127,6 +127,31 @@ define(['./Latam_Library/LMRY_UniversalSetting_LBRY', './Latam_Library/LMRY_Hide
           }
         }
 
+        if (scriptContext.type == 'create' || scriptContext.type == 'copy' || scriptContext.type == 'edit' ) {
+          if (LMRY_Result[0] === "BR") {
+            //D1715
+            if(type_interface == 'USERINTERFACE'){
+              var data = Library_BoletoBancario_Field.searchSetupTaxSubsidiary(subsidiary);
+              var showBankConfig = data[0].showBank;
+              if(showBankConfig && showBankConfig==true){
+                Library_BoletoBancario_Field.generateFields(scriptContext,FEAT_LANG);
+              }
+            }
+            if(Library_Mail.getAuthorization(877, licenses)){
+              libraryFleteGlobales.createCustpage(scriptContext);
+            }
+          }
+        }
+
+        if(scriptContext.type == 'view' && LMRY_Result[0] === "BR" && type_interface == 'USERINTERFACE'){
+          //D1715
+          var data = Library_BoletoBancario_Field.searchSetupTaxSubsidiary(subsidiary);
+          var showBankConfig = data[0].showBank;
+          if(showBankConfig && showBankConfig==true){
+            Library_BoletoBancario_Field.generateFields(scriptContext,FEAT_LANG);
+            Library_BoletoBancario_Field.getBrBankTicketTF(RCD_OBJ,scriptContext.form);
+          }
+        }
         /* Validacion 04/02/22 */
         // Campo - Valida Periodo cerrado
         var LockedPeriodField = OBJ_FORM.addField({
@@ -199,7 +224,7 @@ define(['./Latam_Library/LMRY_UniversalSetting_LBRY', './Latam_Library/LMRY_Hide
 
         if (scriptContext.type != 'print' && scriptContext.type != 'email') {
 
-          if (scriptContext.type == 'create') {
+          if (scriptContext.type == 'create' || scriptContext.type == 'copy') {
             OBJ_FORM.addField({
               id: 'custpage_uni_set_status',
               label: 'Set Estatus',
@@ -886,7 +911,7 @@ define(['./Latam_Library/LMRY_UniversalSetting_LBRY', './Latam_Library/LMRY_Hide
 
         if (LMRY_Result[0] == 'AR') {
           if (type_interface == 'USERINTERFACE') {
-            Library_AutoPercepcionDesc.disabledSalesDiscount(OBJ_FORM);
+            Library_AutoPercepcionDesc.disabledSalesDiscount(OBJ_FORM,subsidiary);
           }
         }
 
@@ -896,6 +921,12 @@ define(['./Latam_Library/LMRY_UniversalSetting_LBRY', './Latam_Library/LMRY_Hide
 
         if (LMRY_Result[0] == 'BR' && scriptContext.type == "view" && type_interface == 'USERINTERFACE') {
           Library_RedirecPayment.redirectModulePayment(OBJ_FORM, RCD_OBJ);
+        }
+
+        var iscreateAS = library_Uni_Setting.checkIsCreateAutomaticSet(subsidiary);
+        //Universal Setting se realiza solo al momento de recargar
+        if (scriptContext.type == 'create' && iscreateAS && (["USERINTERFACE", "USEREVENT", "CSVIMPORT", "RESTWEBSERVICES", "RESTLET", "WEBSERVICES"].indexOf(type_interface) != -1) && (ST_FEATURE == false || ST_FEATURE == "F")) {
+          library_Uni_Setting.runAutomaticSet(RCD_OBJ, licenses, type_interface, false, LMRY_Result);
         }
 
       } catch (err) {
@@ -1007,47 +1038,7 @@ define(['./Latam_Library/LMRY_UniversalSetting_LBRY', './Latam_Library/LMRY_Hide
         var type_event = scriptContext.type;
         //Universal Setting se realiza solo al momento de crear
         if (type_event == 'create' && (["USERINTERFACE", "USEREVENT", "CSVIMPORT", "RESTWEBSERVICES", "RESTLET", "WEBSERVICES"].indexOf(type_interface) != -1) && (ST_FEATURE == false || ST_FEATURE == "F")) {
-
-          var type_document = RCD.getValue('custbody_lmry_document_type');
-
-          if (library_Uni_Setting.auto_universal_setting(licenses, false)) {
-            //Solo si el campo LATAM - LEGAL DOCUMENT TYPE se encuentra vacío
-            if (type_interface == 'USERINTERFACE') {
-              if (RCD.getValue('custpage_uni_set_status') == 'F' && (type_document == '' || type_document == null)) {
-                //Seteo campos cabecera, numero pre impreso y template
-                if (featureAfterSaving == true || featureAfterSaving == 'T') {
-                  library_Uni_Setting.automatic_setfield(RCD, true);
-                } else {
-                  library_Uni_Setting.automatic_setfield(RCD, false);
-                  library_Uni_Setting.set_preimpreso(RCD, LMRY_Result, licenses);
-                }
-                library_Uni_Setting.set_template(RCD, licenses);
-                RCD.setValue('custpage_uni_set_status', 'T');
-              }
-
-            } else if (["USEREVENT", "CSVIMPORT", "RESTWEBSERVICES", "RESTLET", "WEBSERVICES"].indexOf(type_interface) != -1) {
-              var check_csv = RCD.getValue('custbody_lmry_scheduled_process');
-              //Check box para controlar el seteo automático en el record anexado
-              if ((check_csv == false || check_csv == 'F') && (type_document == '' || type_document == null)) {
-                //Seteo campos cabecera, numero pre impreso y template
-                if (featureAfterSaving == true || featureAfterSaving == 'T') {
-                  library_Uni_Setting.automatic_setfield(RCD, true);
-                } else {
-                  library_Uni_Setting.automatic_setfield(RCD, false);
-                  library_Uni_Setting.set_preimpreso(RCD, LMRY_Result, licenses);
-                }
-                library_Uni_Setting.set_template(RCD, licenses);
-
-                if (check_csv == 'F') {
-                  RCD.setValue('custbody_lmry_scheduled_process', 'T');
-                } else {
-                  RCD.setValue('custbody_lmry_scheduled_process', true);
-                }
-              }
-            }
-            //Seteo de campos perteneciente a record anexado
-            library_Uni_Setting.set_inv_identifier(RCD);
-          }
+          library_Uni_Setting.runAutomaticSet(RCD, licenses, type_interface, featureAfterSaving, LMRY_Result);
         }
         if (type_event == 'edit') {
           if (library_Uni_Setting.auto_universal_setting(licenses, false)) {
@@ -1604,6 +1595,14 @@ define(['./Latam_Library/LMRY_UniversalSetting_LBRY', './Latam_Library/LMRY_Hide
         if (LMRY_Result[0] == "BR") {
           if (["create", "edit", "copy"].indexOf(scriptContext.type) != -1 && Library_Mail.getAuthorization(877, licenses)) {
             libraryFleteGlobales.updateBrTransactionField(scriptContext);
+          }
+          // D1715
+          if (["create", "edit", "copy"].indexOf(scriptContext.type) != -1 && type_interface == 'USERINTERFACE') {
+            var data = Library_BoletoBancario_Field.searchSetupTaxSubsidiary(subsidiary);
+            var showBankConfig = data[0].showBank;
+            if(showBankConfig && showBankConfig==true){
+              Library_BoletoBancario_Field.updateBoletoBancario(RCD);
+            }
           }
         }
         if (scriptContext.type == 'create' || scriptContext.type == 'edit' || scriptContext.type == 'copy') {

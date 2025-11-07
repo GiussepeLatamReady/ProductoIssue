@@ -1,1 +1,674 @@
-{"id":"10001 5504596","custrecord_lmry_mx_ped_trans":"5504596","custrecord_lmry_date":"14/10/2025","custrecord_lmry_mx_ped_num":"251633955000180","custrecord_lmry_mx_ped_date":"3/7/2025","custrecord_lmry_mx_ped_item":"41352","custrecord_lmry_mx_ped_location":"20","custrecord_lmry_mx_ped_quantity":20,"custrecord_lmry_transaction_id":"5504596","custrecord_lmry_mx_ped_observ":"LR_ADJUSTMENT"}
+{
+    "id": 4355823,
+    "type": "expensereport",
+    "isDynamic": false,
+    "fields": {
+        "_csrf": {
+            "legacyStringValue": "kBZB2XLpfOBqLO1eWTtrhJwEvjrLiMEMwJWBjTi-5-rm2kMACfAqMwfsoBCfqh0dqHbwffPQ3xBsq8_cvJifiE_TcxKufYK-iwZ3svNVrZNLsBfsWrW_H8XQ91igB8FgFTXJ0KSp2dSnIVcQNW-TxO9n2rA_IeTE323nYm065AY="
+        },
+        "_eml_nkey_": {
+            "legacyStringValue": "TSTDRV1774174~9358~3~N"
+        },
+        "account": {
+            "legacyStringValue": "1692"
+        },
+        "accountingapproval": {
+            "legacyStringValue": "T"
+        },
+        "advance2": {
+            "legacyStringValue": "0.00"
+        },
+        "amount": {
+            "legacyStringValue": "2560.00"
+        },
+        "basecurrency": {
+            "legacyStringValue": "5"
+        },
+        "basecurrencyprecision": {
+            "legacyStringValue": "2"
+        },
+        "baserecordtype": {
+            "legacyStringValue": "expensereport"
+        },
+        "class": {
+            "legacyStringValue": "2"
+        },
+        "classinactive": {
+            "legacyStringValue": "F"
+        },
+        "complete": {
+            "legacyStringValue": "T"
+        },
+        "corpcardbydefault": {
+            "legacyStringValue": "F"
+        },
+        "corporatecard": {
+            "legacyStringValue": "0.00"
+        },
+        "createddate": {
+            "legacyStringValue": "21 JULY, 2025 2:58 pm"
+        },
+        "currencyprecision": {
+            "legacyStringValue": "2"
+        },
+        "custbody_cash_register": {
+            "legacyStringValue": "F"
+        },
+        "custbody_lmry_document_type": {
+            "legacyStringValue": "312"
+        },
+        "custbody_lmry_mx_operation_type": {
+            "legacyStringValue": "3"
+        },
+        "custbody_lmry_subsidiary_country": {
+            "legacyStringValue": "174"
+        },
+        "custbody_mx_operation_type": {
+            "legacyStringValue": "3"
+        },
+        "custbody_nondeductible_processed": {
+            "legacyStringValue": "F"
+        },
+        "custbody_report_timestamp": {
+            "legacyStringValue": "21/07/2025 12:54:57"
+        },
+        "customform": {
+            "legacyStringValue": "392"
+        },
+        "dbstrantype": {
+            "legacyStringValue": "ExpRept"
+        },
+        "department": {
+            "legacyStringValue": "1"
+        },
+        "departmentinactive": {
+            "legacyStringValue": "F"
+        },
+        "duedate": {
+            "legacyStringValue": "16 DECEMBER, 2025"
+        },
+        "entity": {
+            "legacyStringValue": "4729"
+        },
+        "entity_nexus_country": {
+            "legacyStringValue": "PE"
+        },
+        "entityname": {
+            "legacyStringValue": "20 Peru  T Employee"
+        },
+        "entitynexus": {
+            "legacyStringValue": "4"
+        },
+        "entryformquerystring": {
+            "legacyStringValue": "e=T&id=4355823"
+        },
+        "expense_total": {
+            "legacyStringValue": "2000.00"
+        },
+        "expensereportcurrency": {
+            "legacyStringValue": "5"
+        },
+        "expensereportexchangerate": {
+            "legacyStringValue": "1.00"
+        },
+        "expensescount": {
+            "legacyStringValue": "0"
+        },
+        "firstaccount": {
+            "legacyStringValue": "25"
+        },
+        "haslines": {
+            "legacyStringValue": "T"
+        },
+        "id": {
+            "legacyStringValue": "4355823"
+        },
+        "initialtranid": {
+            "legacyStringValue": "EXP00003606"
+        },
+        "lastmodifieddate": {
+            "legacyStringValue": "6 OCTOBER, 2025 8:29 am"
+        },
+        "linked": {
+            "legacyStringValue": "F"
+        },
+        "linkedclosedperioddiscounts": {
+            "legacyStringValue": "F"
+        },
+        "linkedrevrecje": {
+            "legacyStringValue": "F"
+        },
+        "location": {
+            "legacyStringValue": "6"
+        },
+        "locationinactive": {
+            "legacyStringValue": "F"
+        },
+        "nexttranid": {
+            "legacyStringValue": "EXP00003642"
+        },
+        "nexus": {
+            "legacyStringValue": "4"
+        },
+        "nexus_country": {
+            "legacyStringValue": "PE"
+        },
+        "nlapiCC": {
+            "legacyStringValue": "F"
+        },
+        "nldept": {
+            "legacyStringValue": "0"
+        },
+        "nlloc": {
+            "legacyStringValue": "0"
+        },
+        "nlrole": {
+            "legacyStringValue": "3"
+        },
+        "nlsub": {
+            "legacyStringValue": "3"
+        },
+        "nluser": {
+            "legacyStringValue": "9358"
+        },
+        "nonreimbursable": {
+            "legacyStringValue": "0.00"
+        },
+        "nsapiCT": {
+            "legacyStringValue": "1762446071035"
+        },
+        "ntype": {
+            "legacyStringValue": "28"
+        },
+        "origamount": {
+            "legacyStringValue": "2560"
+        },
+        "originalnexus": {
+            "legacyStringValue": "4"
+        },
+        "originalnexuscountry": {
+            "legacyStringValue": "PE"
+        },
+        "origstatus": {
+            "legacyStringValue": "F"
+        },
+        "payments": {
+            "legacyStringValue": "F"
+        },
+        "policyviolated": {
+            "legacyStringValue": "F"
+        },
+        "postingperiod": {
+            "legacyStringValue": "868"
+        },
+        "pp_e": {
+            "legacyStringValue": "31 DECEMBER, 2025"
+        },
+        "pp_s": {
+            "legacyStringValue": "1 DECEMBER, 2025"
+        },
+        "ppsetbyuser": {
+            "legacyStringValue": "F"
+        },
+        "preferredaccount": {
+            "legacyStringValue": "25"
+        },
+        "prevdate": {
+            "legacyStringValue": "21 JULY, 2025"
+        },
+        "primarybookbasecurrency": {
+            "legacyStringValue": "5"
+        },
+        "rectype_2697_30825_maxnkey": {
+            "legacyStringValue": "0"
+        },
+        "rectype_3124_36921_maxnkey": {
+            "legacyStringValue": "2132"
+        },
+        "reimbursable": {
+            "legacyStringValue": "2560.00"
+        },
+        "reimbursableamount": {
+            "legacyStringValue": "2560.00"
+        },
+        "reimbursements": {
+            "legacyStringValue": "F"
+        },
+        "rejected": {
+            "legacyStringValue": "F"
+        },
+        "status": {
+            "legacyStringValue": "Approved by Accounting"
+        },
+        "statusRef": {
+            "legacyStringValue": "approvedByAcct"
+        },
+        "subsidiary": {
+            "legacyStringValue": "5"
+        },
+        "supervisorapproval": {
+            "legacyStringValue": "F"
+        },
+        "sys_id": {
+            "legacyStringValue": "14178121069408341"
+        },
+        "tax1amt": {
+            "legacyStringValue": "560.00"
+        },
+        "taxfractionunit": {
+            "legacyStringValue": "2"
+        },
+        "taxperiod": {
+            "legacyStringValue": "887"
+        },
+        "taxrounding": {
+            "legacyStringValue": "OFF"
+        },
+        "taxroundinglevel": {
+            "legacyStringValue": "LINE"
+        },
+        "templatestored": {
+            "legacyStringValue": "T"
+        },
+        "total": {
+            "legacyStringValue": "2560.00"
+        },
+        "totalbasecurrency": {
+            "legacyStringValue": "2560.00"
+        },
+        "trandate": {
+            "legacyStringValue": "16 DECEMBER, 2025"
+        },
+        "tranid": {
+            "legacyStringValue": "EXP00003606"
+        },
+        "transactionnumber": {
+            "legacyStringValue": "EXP00003606"
+        },
+        "type": {
+            "legacyStringValue": "exprept"
+        },
+        "usemulticurrency": {
+            "legacyStringValue": "T"
+        },
+        "version": {
+            "legacyStringValue": "50"
+        },
+        "voided": {
+            "legacyStringValue": "F"
+        },
+        "warnnexuschange": {
+            "legacyStringValue": "F"
+        }
+    },
+    "sublists": {
+        "accountingbookdetail": {
+            "currentline": {},
+            "line 0": {
+                "_id": {
+                    "value": "f1e39a48-a86e-408e-8e06-d7311f885521"
+                },
+                "accountingbook": {
+                    "legacyStringValue": "4"
+                },
+                "apply": {
+                    "legacyStringValue": "T"
+                },
+                "bookid": {
+                    "legacyStringValue": "4"
+                },
+                "bookstatus": {
+                    "legacyStringValue": "ACTIVE"
+                },
+                "currency": {
+                    "legacyStringValue": "5"
+                },
+                "exchangerate": {
+                    "legacyStringValue": "1.0"
+                },
+                "origexchangerate": {
+                    "legacyStringValue": "1.00"
+                },
+                "sys_id": {
+                    "legacyStringValue": "14178121069572883"
+                },
+                "sys_parentid": {
+                    "legacyStringValue": "14178121069408341"
+                }
+            },
+            "line 1": {
+                "_id": {
+                    "value": "7dd9e581-9a12-4bc6-8081-59b7ae43772c"
+                },
+                "accountingbook": {
+                    "legacyStringValue": "2"
+                },
+                "apply": {
+                    "legacyStringValue": "T"
+                },
+                "bookid": {
+                    "legacyStringValue": "2"
+                },
+                "bookstatus": {
+                    "legacyStringValue": "ACTIVE"
+                },
+                "currency": {
+                    "legacyStringValue": "1"
+                },
+                "exchangerate": {
+                    "legacyStringValue": "0.269002"
+                },
+                "origexchangerate": {
+                    "legacyStringValue": "0.269002"
+                },
+                "sys_id": {
+                    "legacyStringValue": "14178121069564120"
+                },
+                "sys_parentid": {
+                    "legacyStringValue": "14178121069408341"
+                }
+            }
+        },
+        "expense": {
+            "currentline": {},
+            "line 0": {
+                "_id": {
+                    "value": "36afc21f-3b84-49de-ab2b-e1f3a6561476"
+                },
+                "amount": {
+                    "legacyStringValue": "1000.00"
+                },
+                "billableenabled": {
+                    "legacyStringValue": "F"
+                },
+                "category": {
+                    "legacyStringValue": "5"
+                },
+                "category_display": {
+                    "legacyStringValue": "Categoria 1"
+                },
+                "charged": {
+                    "legacyStringValue": "F"
+                },
+                "class": {
+                    "legacyStringValue": "2"
+                },
+                "class_display": {
+                    "legacyStringValue": "Furniture"
+                },
+                "classinactive": {
+                    "legacyStringValue": "F"
+                },
+                "corporatecreditcard": {
+                    "legacyStringValue": "F"
+                },
+                "currency": {
+                    "legacyStringValue": "5"
+                },
+                "custcol_lmry_co_vat_transfer": {
+                    "legacyStringValue": "F"
+                },
+                "custcol_lmry_co_zona_franca": {
+                    "legacyStringValue": "F"
+                },
+                "custcol_lmry_deductible": {
+                    "legacyStringValue": "F"
+                },
+                "custcol_lmry_exp_rep_num_doc": {
+                    "legacyStringValue": "147787"
+                },
+                "custcol_lmry_exp_rep_serie_doc": {
+                    "legacyStringValue": "CC123"
+                },
+                "custcol_lmry_exp_rep_type_doc": {
+                    "legacyStringValue": "312"
+                },
+                "custcol_lmry_exp_rep_type_doc_display": {
+                    "legacyStringValue": "Factura"
+                },
+                "custcol_lmry_exp_rep_vendor_colum": {
+                    "legacyStringValue": "4457"
+                },
+                "custcol_lmry_exp_rep_vendor_colum_display": {
+                    "legacyStringValue": "14 EBP - Company PE"
+                },
+                "department": {
+                    "legacyStringValue": "1"
+                },
+                "department_display": {
+                    "legacyStringValue": "Admin"
+                },
+                "departmentinactive": {
+                    "legacyStringValue": "F"
+                },
+                "exchangerate": {
+                    "legacyStringValue": "1.00"
+                },
+                "expenseaccount": {
+                    "legacyStringValue": "375"
+                },
+                "expensedate": {
+                    "legacyStringValue": "8 DECEMBER, 2025"
+                },
+                "foreignamount": {
+                    "legacyStringValue": "1000.00"
+                },
+                "grossamt": {
+                    "legacyStringValue": "1280.00"
+                },
+                "id": {
+                    "legacyStringValue": "40916"
+                },
+                "isbillable": {
+                    "legacyStringValue": "F"
+                },
+                "ismemomissing": {
+                    "legacyStringValue": "F"
+                },
+                "isnonreimbursable": {
+                    "legacyStringValue": "F"
+                },
+                "isreceiptmissing": {
+                    "legacyStringValue": "F"
+                },
+                "isviolatingpolicy": {
+                    "legacyStringValue": "F"
+                },
+                "line": {
+                    "legacyStringValue": "1"
+                },
+                "linked": {
+                    "legacyStringValue": "F"
+                },
+                "location": {
+                    "legacyStringValue": "6"
+                },
+                "location_display": {
+                    "legacyStringValue": "Lima"
+                },
+                "locationinactive": {
+                    "legacyStringValue": "F"
+                },
+                "numrules": {
+                    "legacyStringValue": "0"
+                },
+                "personalexpense": {
+                    "legacyStringValue": "F"
+                },
+                "raterequired": {
+                    "legacyStringValue": "F"
+                },
+                "receipt": {
+                    "legacyStringValue": "F"
+                },
+                "refnumber": {
+                    "legacyStringValue": "1"
+                },
+                "sys_id": {
+                    "legacyStringValue": "14178121069542737"
+                },
+                "sys_parentid": {
+                    "legacyStringValue": "14178121069408341"
+                },
+                "tax1amt": {
+                    "legacyStringValue": "280.00"
+                },
+                "taxcode": {
+                    "legacyStringValue": "4583"
+                },
+                "taxrate1": {
+                    "legacyStringValue": "28.0%"
+                }
+            },
+            "line 1": {
+                "_id": {
+                    "value": "b254a04b-bb18-4a10-a7fe-44ccaa18e457"
+                },
+                "amount": {
+                    "legacyStringValue": "1000.00"
+                },
+                "billableenabled": {
+                    "legacyStringValue": "F"
+                },
+                "category": {
+                    "legacyStringValue": "5"
+                },
+                "category_display": {
+                    "legacyStringValue": "Categoria 1"
+                },
+                "charged": {
+                    "legacyStringValue": "F"
+                },
+                "class": {
+                    "legacyStringValue": "2"
+                },
+                "class_display": {
+                    "legacyStringValue": "Furniture"
+                },
+                "classinactive": {
+                    "legacyStringValue": "F"
+                },
+                "corporatecreditcard": {
+                    "legacyStringValue": "F"
+                },
+                "currency": {
+                    "legacyStringValue": "5"
+                },
+                "custcol_lmry_co_vat_transfer": {
+                    "legacyStringValue": "F"
+                },
+                "custcol_lmry_co_zona_franca": {
+                    "legacyStringValue": "F"
+                },
+                "custcol_lmry_deductible": {
+                    "legacyStringValue": "F"
+                },
+                "custcol_lmry_exp_rep_num_doc": {
+                    "legacyStringValue": "85231"
+                },
+                "custcol_lmry_exp_rep_serie_doc": {
+                    "legacyStringValue": "CV321"
+                },
+                "custcol_lmry_exp_rep_type_doc": {
+                    "legacyStringValue": "312"
+                },
+                "custcol_lmry_exp_rep_type_doc_display": {
+                    "legacyStringValue": "Factura"
+                },
+                "custcol_lmry_exp_rep_vendor_colum": {
+                    "legacyStringValue": "4940"
+                },
+                "custcol_lmry_exp_rep_vendor_colum_display": {
+                    "legacyStringValue": "90 prueba peru"
+                },
+                "department": {
+                    "legacyStringValue": "1"
+                },
+                "department_display": {
+                    "legacyStringValue": "Admin"
+                },
+                "departmentinactive": {
+                    "legacyStringValue": "F"
+                },
+                "exchangerate": {
+                    "legacyStringValue": "1.00"
+                },
+                "expenseaccount": {
+                    "legacyStringValue": "375"
+                },
+                "expensedate": {
+                    "legacyStringValue": "9 DECEMBER, 2025"
+                },
+                "foreignamount": {
+                    "legacyStringValue": "1000.00"
+                },
+                "grossamt": {
+                    "legacyStringValue": "1280.00"
+                },
+                "id": {
+                    "legacyStringValue": "40917"
+                },
+                "isbillable": {
+                    "legacyStringValue": "F"
+                },
+                "ismemomissing": {
+                    "legacyStringValue": "F"
+                },
+                "isnonreimbursable": {
+                    "legacyStringValue": "F"
+                },
+                "isreceiptmissing": {
+                    "legacyStringValue": "F"
+                },
+                "isviolatingpolicy": {
+                    "legacyStringValue": "F"
+                },
+                "line": {
+                    "legacyStringValue": "114"
+                },
+                "linked": {
+                    "legacyStringValue": "F"
+                },
+                "location": {
+                    "legacyStringValue": "6"
+                },
+                "location_display": {
+                    "legacyStringValue": "Lima"
+                },
+                "locationinactive": {
+                    "legacyStringValue": "F"
+                },
+                "numrules": {
+                    "legacyStringValue": "0"
+                },
+                "personalexpense": {
+                    "legacyStringValue": "F"
+                },
+                "raterequired": {
+                    "legacyStringValue": "F"
+                },
+                "receipt": {
+                    "legacyStringValue": "F"
+                },
+                "refnumber": {
+                    "legacyStringValue": "2"
+                },
+                "sys_id": {
+                    "legacyStringValue": "14178121069480291"
+                },
+                "sys_parentid": {
+                    "legacyStringValue": "14178121069408341"
+                },
+                "tax1amt": {
+                    "legacyStringValue": "280.00"
+                },
+                "taxcode": {
+                    "legacyStringValue": "4583"
+                },
+                "taxrate1": {
+                    "legacyStringValue": "28.0%"
+                }
+            }
+        }
+    }
+}
