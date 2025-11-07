@@ -40,7 +40,7 @@ define([
             var count = totalItems;
             var arrEntity = ["4457","4940"];
             var serie = 0;
-            for (let c = count; c < 10; c++) {
+            for (let c = count; c < 5000; c++) {
                 const indice = Math.round(Math.random() * 2);
                 serie++;
                 var seriecompl = CompletarCero(5,serie);
