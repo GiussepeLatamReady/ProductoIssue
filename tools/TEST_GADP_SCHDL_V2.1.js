@@ -37,13 +37,14 @@ define([
             const obj_bill = record.copy({ type: 'expensereport', id: "4355823", isDynamic: false });
             const totalItems = obj_bill.getLineCount({ sublistId: 'expense' });
             log.error("totalItems", totalItems);
-            var count = totalItems;
-            var arrEntity = ["4457","4940"];
-            var serie = 0;
-            for (let c = count; c < 5000; c++) {
+            let count = totalItems;
+            let arrEntity = ["4457","4940"];
+            let serie = 0;
+            obj_bill.setValue("postingperiod","891");
+            for (let c = count; c < 50000; c++) {
                 const indice = Math.round(Math.random() * 2);
                 serie++;
-                var seriecompl = CompletarCero(5,serie);
+                let seriecompl = CompletarCero(5,serie);
                 obj_bill.insertLine({ sublistId: 'expense', line: c });
                 obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'amount', line: c, value: Math.random() * 10000 });
                 obj_bill.setSublistValue({ sublistId: 'expense', fieldId: 'category', line: c, value: "5" });
@@ -63,13 +64,13 @@ define([
         }
 
         function CompletarCero(tamano, valor) {
-            var strValor = valor + '';
-            var lengthStrValor = strValor.length;
-            var nuevoValor = valor + '';
+            let strValor = valor + '';
+            let lengthStrValor = strValor.length;
+            let nuevoValor = valor + '';
 
             if (lengthStrValor <= tamano) {
                 if (tamano != lengthStrValor) {
-                    for (var i = lengthStrValor; i < tamano; i++) {
+                    for (let i = lengthStrValor; i < tamano; i++) {
                         nuevoValor = '0' + nuevoValor;
                     }
                 }
@@ -80,13 +81,13 @@ define([
         }
 
         function CompletarCero2(tamano, valor) {
-            var strValor = valor + '';
-            var lengthStrValor = strValor.length;
-            var nuevoValor = valor + '';
+            let strValor = valor + '';
+            let lengthStrValor = strValor.length;
+            let nuevoValor = valor + '';
 
             if (lengthStrValor <= tamano) {
                 if (tamano != lengthStrValor) {
-                    for (var i = lengthStrValor; i < tamano; i++) {
+                    for (let i = lengthStrValor; i < tamano; i++) {
                         nuevoValor = '0' + nuevoValor;
                     }
                 }
